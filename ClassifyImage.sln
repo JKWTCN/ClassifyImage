@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.11.35327.3
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClassifyImage", "ClassifyImage\ClassifyImage.csproj", "{FC9C5476-4A17-4D64-B980-D17927C607B4}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{FC9C5476-4A17-4D64-B980-D17927C607B4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FC9C5476-4A17-4D64-B980-D17927C607B4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FC9C5476-4A17-4D64-B980-D17927C607B4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FC9C5476-4A17-4D64-B980-D17927C607B4}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {4861438B-0B7C-4E9A-8E64-9DDC537C5FEC}
+	EndGlobalSection
+EndGlobal

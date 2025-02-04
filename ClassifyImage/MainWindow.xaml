@@ -1,0 +1,67 @@
+﻿<Window x:Class="ClassifyImage.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ClassifyImage"
+        mc:Ignorable="d"
+        Title="图片查看器" Height="450" Width="800" KeyDown="Window_KeyDown">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="10*"></RowDefinition>
+            <RowDefinition></RowDefinition>
+        </Grid.RowDefinitions>
+        <Grid  Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition></ColumnDefinition>
+                <ColumnDefinition Width="10*"></ColumnDefinition>
+                <ColumnDefinition></ColumnDefinition>
+            </Grid.ColumnDefinitions>
+            <Image  Source="D:\WORKSPACE\Code\VS\ClassifyImage\ClassifyImage\res\arrow_left.png"  Grid.Column="0"  HorizontalAlignment="Center" VerticalAlignment="Center"  Name="left_btn"  MouseLeftButtonDown="Image_MouseLeftButtonDown"></Image>
+            <Image Source="D:\WORKSPACE\Code\VS\ClassifyImage\ClassifyImage\test.jpg" Grid.Column="1" Name="now_display_img"/>
+            <Image  Source="D:\WORKSPACE\Code\VS\ClassifyImage\ClassifyImage\res\arrow_right.png" Grid.Column="2" HorizontalAlignment="Center" VerticalAlignment="Center" Name="right_btn"  MouseLeftButtonDown="Image_MouseLeftButtonDown"></Image>
+
+        </Grid>
+        <Grid  Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1.5*"></ColumnDefinition>
+                <ColumnDefinition></ColumnDefinition>
+                <ColumnDefinition></ColumnDefinition>
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="20,0,20,0">
+                <Button Grid.Column="0" Height="Auto" Width="Auto" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,10,0" Name="edit_img_btn" Click="edit_img_btn_Click">编辑图片</Button>
+                <Button Grid.Column="0" Height="Auto" Width="Auto" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,10,0" Name="setting_btn" Click="setting_btn_Click">软件配置</Button>
+                <Button Grid.Column="0" Height="Auto" Width="Auto" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,10,0" Name="open_img_btn" Click="open_img_btn_Click">打开图片</Button>
+                <Button Grid.Column="0" Height="Auto" Width="Auto" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,10,0" Name="open_file_folders_btn" Click="open_file_folders_btn_Click">打开文件夹</Button>
+            </StackPanel>
+            <Grid Grid.Column="1" Width="Auto" >
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition></ColumnDefinition>
+                    <ColumnDefinition Width="5*"></ColumnDefinition>
+                    <ColumnDefinition></ColumnDefinition>
+                    <ColumnDefinition Width="5*"></ColumnDefinition>
+                </Grid.ColumnDefinitions>
+                <Image Grid.Column="0"  Source="D:\WORKSPACE\Code\VS\ClassifyImage\ClassifyImage\res\size_icon.png"/>
+                <TextBlock Grid.Column="1" HorizontalAlignment="Left" VerticalAlignment="Center" Name="now_img_resolution_text" Margin="5,0,0,0">1500x8400</TextBlock>
+                <Image Grid.Column="2"  Source="D:\WORKSPACE\Code\VS\ClassifyImage\ClassifyImage\res\save_icon.png"/>
+                <TextBlock Grid.Column="3" HorizontalAlignment="Left" Name="now_img_size_text" VerticalAlignment="Center" Margin="5,0,0,0">104.3KB</TextBlock>
+            </Grid>
+            <Grid Grid.Column="2" Width="Auto" >
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition></ColumnDefinition>
+                    <ColumnDefinition Width="9*"></ColumnDefinition>
+                    <ColumnDefinition></ColumnDefinition>
+                </Grid.ColumnDefinitions>
+                <Image Grid.Column="0"  Source="D:\WORKSPACE\Code\VS\ClassifyImage\ClassifyImage\res\minus_round_icon.png"  Name="img_minus" MouseLeftButtonDown="Image_MouseLeftButtonDown"/>
+                <Slider  Grid.Column="1" VerticalAlignment="Center" Maximum="100" Minimum="0"></Slider>
+                <Image Grid.Column="2"  Source="D:\WORKSPACE\Code\VS\ClassifyImage\ClassifyImage\res\plus_round_icon.png" Name="img_plus" HorizontalAlignment="Right" MouseLeftButtonDown="Image_MouseLeftButtonDown"/>
+            </Grid>
+
+        </Grid>
+
+
+    </Grid>
+
+
+
+</Window>
