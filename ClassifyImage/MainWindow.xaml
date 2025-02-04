@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ClassifyImage"
         mc:Ignorable="d"
-        Title="图片查看器" Height="450" Width="800" KeyDown="Window_KeyDown">
+        Title="图片分类器" Height="450" Width="800" KeyDown="Window_KeyDown">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="10*"></RowDefinition>
@@ -17,9 +17,9 @@
                 <ColumnDefinition Width="10*"></ColumnDefinition>
                 <ColumnDefinition></ColumnDefinition>
             </Grid.ColumnDefinitions>
-            <Image  Source="D:\WORKSPACE\Code\VS\ClassifyImage\ClassifyImage\res\arrow_left.png"  Grid.Column="0"  HorizontalAlignment="Center" VerticalAlignment="Center"  Name="left_btn"  MouseLeftButtonDown="Image_MouseLeftButtonDown"></Image>
-            <Image Source="D:\WORKSPACE\Code\VS\ClassifyImage\ClassifyImage\test.jpg" Grid.Column="1" Name="now_display_img"/>
-            <Image  Source="D:\WORKSPACE\Code\VS\ClassifyImage\ClassifyImage\res\arrow_right.png" Grid.Column="2" HorizontalAlignment="Center" VerticalAlignment="Center" Name="right_btn"  MouseLeftButtonDown="Image_MouseLeftButtonDown"></Image>
+            <Image  Source="res\arrow_left.png"  Grid.Column="0"  HorizontalAlignment="Center" VerticalAlignment="Center"  Name="left_btn"  MouseLeftButtonDown="Image_MouseLeftButtonDown"></Image>
+            <Image Source="res\test.jpg" Grid.Column="1" Name="now_display_img"/>
+            <Image  Source="res\arrow_right.png" Grid.Column="2" HorizontalAlignment="Center" VerticalAlignment="Center" Name="right_btn"  MouseLeftButtonDown="Image_MouseLeftButtonDown"></Image>
 
         </Grid>
         <Grid  Grid.Row="1">
@@ -41,9 +41,9 @@
                     <ColumnDefinition></ColumnDefinition>
                     <ColumnDefinition Width="5*"></ColumnDefinition>
                 </Grid.ColumnDefinitions>
-                <Image Grid.Column="0"  Source="D:\WORKSPACE\Code\VS\ClassifyImage\ClassifyImage\res\size_icon.png"/>
+                <Image Grid.Column="0"  Source="res\size_icon.png"/>
                 <TextBlock Grid.Column="1" HorizontalAlignment="Left" VerticalAlignment="Center" Name="now_img_resolution_text" Margin="5,0,0,0">1500x8400</TextBlock>
-                <Image Grid.Column="2"  Source="D:\WORKSPACE\Code\VS\ClassifyImage\ClassifyImage\res\save_icon.png"/>
+                <Image Grid.Column="2"  Source="res\save_icon.png"/>
                 <TextBlock Grid.Column="3" HorizontalAlignment="Left" Name="now_img_size_text" VerticalAlignment="Center" Margin="5,0,0,0">104.3KB</TextBlock>
             </Grid>
             <Grid Grid.Column="2" Width="Auto" >
@@ -52,9 +52,9 @@
                     <ColumnDefinition Width="9*"></ColumnDefinition>
                     <ColumnDefinition></ColumnDefinition>
                 </Grid.ColumnDefinitions>
-                <Image Grid.Column="0"  Source="D:\WORKSPACE\Code\VS\ClassifyImage\ClassifyImage\res\minus_round_icon.png"  Name="img_minus" MouseLeftButtonDown="Image_MouseLeftButtonDown"/>
+                <Image Grid.Column="0"  Source="res\minus_round_icon.png"  Name="img_minus" MouseLeftButtonDown="Image_MouseLeftButtonDown"/>
                 <Slider  Grid.Column="1" VerticalAlignment="Center" Maximum="100" Minimum="0"></Slider>
-                <Image Grid.Column="2"  Source="D:\WORKSPACE\Code\VS\ClassifyImage\ClassifyImage\res\plus_round_icon.png" Name="img_plus" HorizontalAlignment="Right" MouseLeftButtonDown="Image_MouseLeftButtonDown"/>
+                <Image Grid.Column="2"  Source="res\plus_round_icon.png" Name="img_plus" HorizontalAlignment="Right" MouseLeftButtonDown="Image_MouseLeftButtonDown"/>
             </Grid>
 
         </Grid>
