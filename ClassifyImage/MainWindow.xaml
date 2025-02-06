@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ClassifyImage"
         mc:Ignorable="d"
-        Title="图片分类器" Height="450" Width="800" KeyDown="Window_KeyDown">
+        Title="图片分类器" Height="450" Width="800" KeyUp="Window_KeyUp" >
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="10*"></RowDefinition>
@@ -18,7 +18,7 @@
                 <ColumnDefinition></ColumnDefinition>
             </Grid.ColumnDefinitions>
             <Image  Source="res\arrow_left.png"  Grid.Column="0"  HorizontalAlignment="Center" VerticalAlignment="Center"  Name="left_btn"  MouseLeftButtonDown="Image_MouseLeftButtonDown"></Image>
-            <Image Source="res\test.jpg" Grid.Column="1" Name="now_display_img"/>
+            <Image  Source="res\MyGO_easter_egg.jpg" Grid.Column="1" Name="now_display_img"/>
             <Image  Source="res\arrow_right.png" Grid.Column="2" HorizontalAlignment="Center" VerticalAlignment="Center" Name="right_btn"  MouseLeftButtonDown="Image_MouseLeftButtonDown"></Image>
 
         </Grid>

@@ -13,11 +13,15 @@
     <None Remove="res\arrow_right.png" />
     <None Remove="res\face.jpg" />
     <None Remove="res\minus_round_icon.png" />
+    <None Remove="res\MyGO_easter_egg.jpg" />
+    <None Remove="res\MyGO_easter_egg2.jpg" />
     <None Remove="res\plus_round_icon.png" />
     <None Remove="res\save_icon.png" />
     <None Remove="res\size_icon.png" />
-    <None Remove="res\test.jpg" />
-    <None Remove="res\test1.jpg" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Drawing.Common" Version="9.0.1" />
   </ItemGroup>
 
   <ItemGroup>
@@ -33,6 +37,8 @@
     <Resource Include="res\minus_round_icon.png">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Resource>
+    <Resource Include="res\MyGO_easter_egg.jpg" />
+    <Resource Include="res\MyGO_easter_egg2.jpg" />
     <Resource Include="res\plus_round_icon.png">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Resource>
@@ -42,12 +48,21 @@
     <Resource Include="res\size_icon.png">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="res\test.jpg">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="res\test1.jpg">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-    </Resource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Settings.Designer.cs">
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
   </ItemGroup>
 
 </Project>

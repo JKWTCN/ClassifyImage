@@ -147,19 +147,25 @@
                     <Grid Grid.Row="0" Grid.Column="0">
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
                             <TextBlock HorizontalAlignment="Center" Margin="10,0,10,0" VerticalAlignment="Center">分类后自动切换下一张</TextBlock>
-                            <CheckBox Name="auto_next_check" HorizontalAlignment="Center" VerticalAlignment="Center" IsChecked="True"></CheckBox>
+                            <CheckBox Name="auto_next_check" HorizontalAlignment="Center" VerticalAlignment="Center" IsChecked="True" Checked="HandleCheck" Unchecked="HandleUnchecked"></CheckBox>
                         </StackPanel>
                     </Grid>
                     <Grid Grid.Row="0" Grid.Column="1">
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
                             <TextBlock HorizontalAlignment="Center" Margin="10,0,10,0" VerticalAlignment="Center">同时按下多个键分类</TextBlock>
-                            <CheckBox Name="mut_kind_check" HorizontalAlignment="Center" VerticalAlignment="Center" IsChecked="False"></CheckBox>
+                            <CheckBox Name="mut_kind_check" HorizontalAlignment="Center" VerticalAlignment="Center" IsChecked="False" Checked="HandleCheck" Unchecked="HandleUnchecked"></CheckBox>
                         </StackPanel>
                     </Grid>
                     <Grid Grid.Row="0" Grid.Column="2">
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
                             <TextBlock HorizontalAlignment="Center" Margin="10,0,10,0" VerticalAlignment="Center">配置窗口和主窗口同时可操作</TextBlock>
-                            <CheckBox Name="control_main_setting_windows" HorizontalAlignment="Center" VerticalAlignment="Center" IsChecked="False"></CheckBox>
+                            <CheckBox Name="control_main_setting_windows_check" HorizontalAlignment="Center" VerticalAlignment="Center" IsChecked="False" Checked="HandleCheck" Unchecked="HandleUnchecked"></CheckBox>
+                        </StackPanel>
+                    </Grid>
+                    <Grid Grid.Row="1" Grid.Column="0">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <TextBlock HorizontalAlignment="Center" Margin="10,0,10,0" VerticalAlignment="Center">彩蛋</TextBlock>
+                            <CheckBox Name="MyGO_easter_egg_check" HorizontalAlignment="Center" VerticalAlignment="Center" IsChecked="False" Checked="HandleCheck" Unchecked="HandleUnchecked"></CheckBox>
                         </StackPanel>
                     </Grid>
                 </Grid>
