@@ -42,9 +42,9 @@
                     <ColumnDefinition Width="5*"></ColumnDefinition>
                 </Grid.ColumnDefinitions>
                 <Image Grid.Column="0"  Source="res\size_icon.png"/>
-                <TextBlock Grid.Column="1" HorizontalAlignment="Left" VerticalAlignment="Center" Name="now_img_resolution_text" Margin="5,0,0,0">1500x8400</TextBlock>
+                <TextBlock Grid.Column="1" HorizontalAlignment="Left" VerticalAlignment="Center" Name="now_img_resolution_text" Margin="5,0,0,0"></TextBlock>
                 <Image Grid.Column="2"  Source="res\save_icon.png"/>
-                <TextBlock Grid.Column="3" HorizontalAlignment="Left" Name="now_img_size_text" VerticalAlignment="Center" Margin="5,0,0,0">104.3KB</TextBlock>
+                <TextBlock Grid.Column="3" HorizontalAlignment="Left" Name="now_img_size_text" VerticalAlignment="Center" Margin="5,0,0,0"></TextBlock>
             </Grid>
             <Grid Grid.Column="2" Width="Auto" >
                 <Grid.ColumnDefinitions>
