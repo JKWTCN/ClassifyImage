@@ -25,6 +25,7 @@ namespace ClassifyImage
                 catch (System.Exception e)
                 {
                     MessageBox.Show($"错误：{path}，{e.Message}");
+                    System.Diagnostics.Process.Start("explorer.exe", path);
                     return null;
 
                 }
