@@ -40,7 +40,44 @@ namespace ClassifyImage
         {
 
             DirectoryInfo TheFolder = new DirectoryInfo(dirPath);
-            var files = TheFolder.GetFiles();
+            var files = TheFolder.GetFiles().OrderByDescending(f => f.CreationTime).ToArray();
+            switch (ClassifyImage.Settings.Default.file_order_combo)
+            {
+                case 0:
+                    //按创建时间降序排序
+                    files = TheFolder.GetFiles().OrderByDescending(f => f.CreationTime).ToArray();
+                    break;
+                case 1:
+                    //按创建时间升序排序
+                    files = TheFolder.GetFiles().OrderBy(f => f.CreationTime).ToArray();
+                    break;
+                case 2:
+                    //按文件名降序排序
+                    files = TheFolder.GetFiles().OrderByDescending(f => f.Name).ToArray();
+                    break;
+                case 3:
+                    //按文件名升序排序
+                    files = TheFolder.GetFiles().OrderBy(f => f.Name).ToArray();
+                    break;
+                case 4:
+                    //按大小降序排序
+                    files = TheFolder.GetFiles().OrderByDescending(f => f.Length).ToArray();
+                    break;
+                case 5:
+                    //按大小升序排序
+                    files = TheFolder.GetFiles().OrderBy(f => f.Length).ToArray();
+                    break;
+                case 6:
+                    //按最后修改时间降序排序
+                    files = TheFolder.GetFiles().OrderByDescending(f => f.LastWriteTime).ToArray();
+                    break;
+                case 7:
+                    //按最后修改时间升序排序
+                    files = TheFolder.GetFiles().OrderBy(f => f.LastWriteTime).ToArray();
+                    break;
+            }
+
+
             List<String> img_paths = new List<string>();
             for (int i = 0; i < files.Length; i++)
             {

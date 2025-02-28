@@ -27,6 +27,7 @@ namespace ClassifyImage
             {
                 now_display_img.Source = null;
             }
+
         }
 
 
@@ -114,7 +115,26 @@ namespace ClassifyImage
         //下一张图片
         private void RightImg()
         {
-
+            if (ClassifyImage.Settings.Default.default_path_check)
+            {
+                if (ClassifyImage.Settings.Default.default_path != "")
+                {
+                    FileInfo now_file_info = new FileInfo(img_paths[now_img_index]);
+                    if (now_file_info.DirectoryName == now_folder_path)
+                    {
+                        var old_index = now_img_index;
+                        var to_path = $"{ClassifyImage.Settings.Default.default_path}\\{new FileInfo(img_paths[old_index]).Name}";
+                        if (!File.Exists(to_path))
+                            File.Move(img_paths[old_index], to_path);
+                        img_paths[old_index] = to_path;
+                    }
+                }
+                else
+                {
+                    MessageBox.Show($"未设置下一步默认保存路径，请到软件配置中配置");
+                    return;
+                }
+            }
             now_img_index = (now_img_index + 1) % img_paths.Count;
             UpdataDisplayImg();
             //GC.Collect();

@@ -150,7 +150,7 @@
                             <CheckBox Name="auto_next_check" HorizontalAlignment="Center" VerticalAlignment="Center" IsChecked="True" Checked="HandleCheck" Unchecked="HandleUnchecked"></CheckBox>
                         </StackPanel>
                     </Grid>
-                    <Grid Grid.Row="0" Grid.Column="1">
+                    <Grid Grid.Row="0" Grid.Column="1"  >
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
                             <TextBlock HorizontalAlignment="Center" Margin="10,0,10,0" VerticalAlignment="Center">同时按下多个键分类</TextBlock>
                             <CheckBox Name="mut_kind_check" HorizontalAlignment="Center" VerticalAlignment="Center" IsChecked="False" Checked="HandleCheck" Unchecked="HandleUnchecked"></CheckBox>
@@ -162,12 +162,36 @@
                             <CheckBox Name="control_main_setting_windows_check" HorizontalAlignment="Center" VerticalAlignment="Center" IsChecked="False" Checked="HandleCheck" Unchecked="HandleUnchecked"></CheckBox>
                         </StackPanel>
                     </Grid>
-                    <Grid Grid.Row="1" Grid.Column="0">
+                    <Grid Grid.Row="1" Grid.Column="0" >
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
                             <TextBlock HorizontalAlignment="Center" Margin="10,0,10,0" VerticalAlignment="Center">彩蛋</TextBlock>
                             <CheckBox Name="MyGO_easter_egg_check" HorizontalAlignment="Center" VerticalAlignment="Center" IsChecked="False" Checked="HandleCheck" Unchecked="HandleUnchecked"></CheckBox>
                         </StackPanel>
                     </Grid>
+                    <Grid Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" >
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <TextBlock HorizontalAlignment="Center" Margin="10,0,10,0" VerticalAlignment="Center">文件排序方式</TextBlock>
+                            <ComboBox Name="file_order_combo"  SelectionChanged="file_order_combo_SelectionChanged" >
+                                <TextBlock>创建时间降序</TextBlock>
+                                <TextBlock>创建时间升序</TextBlock>
+                                <TextBlock>文件名降序</TextBlock>
+                                <TextBlock>文件名升序</TextBlock>
+                                <TextBlock>大小降序</TextBlock>
+                                <TextBlock>大小升序</TextBlock>
+                                <TextBlock>修改时间降序降序</TextBlock>
+                                <TextBlock>修改时间降序升序</TextBlock>
+                            </ComboBox>
+                        </StackPanel>
+                    </Grid>
+                    <Grid Grid.Row="2" Grid.Column="0" ColumnSpan="3">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <CheckBox Name="default_path_check" HorizontalAlignment="Center" VerticalAlignment="Center" IsChecked="False" Checked="HandleCheck" Unchecked="HandleUnchecked"></CheckBox>
+                            <TextBlock HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,5,0">下一张自动移动</TextBlock>
+                            <TextBlock Grid.Column="1" Name="default_path" VerticalAlignment="Center" Width="Auto" HorizontalAlignment="Center" TextAlignment="Center" Margin="5,0,5,0" >未分配路径</TextBlock>
+                            <Button Grid.Column="2" Content="选择路径" Name="choose_default_path" Click="choose_default_path_Click"  ></Button>
+                        </StackPanel>
+                    </Grid>
+
                 </Grid>
             </TabItem>
             <TabItem Header="关于">

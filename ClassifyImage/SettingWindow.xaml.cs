@@ -20,10 +20,14 @@ namespace ClassifyImage
             path_7_text.Text = ClassifyImage.Settings.Default.KeyPath7;
             path_8_text.Text = ClassifyImage.Settings.Default.KeyPath8;
             path_9_text.Text = ClassifyImage.Settings.Default.KeyPath9;
+            default_path.Text = ClassifyImage.Settings.Default.default_path;
             auto_next_check.IsChecked = ClassifyImage.Settings.Default.auto_next_check;
             mut_kind_check.IsChecked = ClassifyImage.Settings.Default.mut_kind_check;
             control_main_setting_windows_check.IsChecked = ClassifyImage.Settings.Default.control_main_setting_windows_check;
             MyGO_easter_egg_check.IsChecked = ClassifyImage.Settings.Default.MyGO_easter_egg_check;
+            default_path_check.IsChecked = ClassifyImage.Settings.Default.default_path_check;
+            file_order_combo.SelectedIndex = ClassifyImage.Settings.Default.file_order_combo;
+          
 
         }
 
@@ -31,7 +35,7 @@ namespace ClassifyImage
         {
             Microsoft.Win32.OpenFolderDialog dialog = new();
             dialog.Multiselect = false;
-            dialog.Title = "选择图片文件夹";
+            dialog.Title = "选择默认文件夹";
             bool? result = dialog.ShowDialog();
             if (result == true)
             {
@@ -130,6 +134,10 @@ namespace ClassifyImage
             {
                 ClassifyImage.Settings.Default.MyGO_easter_egg_check = true;
             }
+            else if (sender == default_path_check)
+            {
+                ClassifyImage.Settings.Default.default_path_check = true;
+            }
             ClassifyImage.Settings.Default.Save();
         }
 
@@ -151,10 +159,34 @@ namespace ClassifyImage
             {
                 ClassifyImage.Settings.Default.MyGO_easter_egg_check = false;
             }
+            else if (sender == default_path_check)
+            {
+                ClassifyImage.Settings.Default.default_path_check = false;
+            }
+            ClassifyImage.Settings.Default.Save();
+        }
+
+        private void choose_default_path_Click(object sender, RoutedEventArgs e)
+        {
+            Microsoft.Win32.OpenFolderDialog dialog = new();
+            dialog.Multiselect = false;
+            dialog.Title = "选择图片文件夹";
+            bool? result = dialog.ShowDialog();
+            if (result == true)
+            {
+                string fullPathToFolder = dialog.FolderName;
+                string folderNameOnly = dialog.SafeFolderName;
+                default_path.Text = fullPathToFolder;
+                ClassifyImage.Settings.Default.default_path = fullPathToFolder;
+                ClassifyImage.Settings.Default.Save();
+
+            }
+        }
+
+        private void file_order_combo_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        {
+            ClassifyImage.Settings.Default.file_order_combo = file_order_combo.SelectedIndex;
             ClassifyImage.Settings.Default.Save();
         }
     }
-
-
-
 }
