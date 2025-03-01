@@ -144,7 +144,7 @@ namespace ClassifyImage
         //更新显示图片
         private void UpdataDisplayImg()
         {
-            Title = img_paths[now_img_index];
+            Title = $"({now_img_index + 1}/{img_paths.Count}){img_paths[now_img_index]}";
             now_img_path = img_paths[now_img_index];
             BitmapImage now_bit_map_img = Tools.LoadBitmapImage(now_img_path);
             if (now_bit_map_img == null)
