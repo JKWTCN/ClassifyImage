@@ -423,7 +423,7 @@ namespace ClassifyImage
 
             _dragStart = currentPos;
 
-            // 添加这一行，更新Thumb位置
+            // 更新Thumb位置
             UpdateResizeThumbsPosition();
         }
 
@@ -432,7 +432,7 @@ namespace ClassifyImage
             _isDragging = false;
             cropRectangle.ReleaseMouseCapture();
 
-            // 添加这一行，确保最终位置正确
+            // 确保最终位置正确
             UpdateResizeThumbsPosition();
         }
         private void btnCancelCrop_Click(object sender, RoutedEventArgs e)
