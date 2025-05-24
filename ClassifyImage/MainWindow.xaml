@@ -5,7 +5,10 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ClassifyImage"
         mc:Ignorable="d"
-        Title="图片分类器" Height="450" Width="800" KeyUp="Window_KeyUp" >
+        Title="图片分类器"
+        Height="450"
+        Width="800"
+        KeyUp="Window_KeyUp">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="10*"></RowDefinition>
@@ -17,10 +20,103 @@
                 <ColumnDefinition Width="10*"></ColumnDefinition>
                 <ColumnDefinition></ColumnDefinition>
             </Grid.ColumnDefinitions>
-            <Image  Source="res\arrow_left.png"  Grid.Column="0"  HorizontalAlignment="Center" VerticalAlignment="Center"  Name="left_btn"  MouseLeftButtonDown="Image_MouseLeftButtonDown"></Image>
-            <Image  Source="res\MyGO_easter_egg.jpg" Grid.Column="1" Name="now_display_img"/>
-            <Image  Source="res\arrow_right.png" Grid.Column="2" HorizontalAlignment="Center" VerticalAlignment="Center" Name="right_btn"  MouseLeftButtonDown="Image_MouseLeftButtonDown"></Image>
+            <Image  Source="res\arrow_left.png"
+                    Grid.Column="0"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Name="left_btn"
+                    MouseLeftButtonDown="Image_MouseLeftButtonDown"></Image>
+            <Image  Source="res\MyGO_easter_egg.jpg"
+                    Grid.Column="1"
+                    Name="now_display_img"/>
+            <Image  Source="res\arrow_right.png"
+                    Grid.Column="2"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Name="right_btn"
+                    MouseLeftButtonDown="Image_MouseLeftButtonDown"></Image>
+            <!-- 添加裁剪相关控件 -->
+            <Canvas x:Name="cropCanvas"
+                    Grid.Column="1"
+                    Visibility="Collapsed"
+                    Background="Transparent">
+                <Rectangle x:Name="cropRectangle"
+                           Stroke="Red"
+                           Fill="Transparent"
+                           StrokeThickness="2"
+                           Visibility="Collapsed"
+                           MouseLeftButtonDown="CropRectangle_MouseLeftButtonDown"
+                           MouseMove="CropRectangle_MouseMove"
+                           MouseLeftButtonUp="CropRectangle_MouseLeftButtonUp"/>
 
+                <!-- 8个调整大小的Thumb -->
+                <Thumb x:Name="topLeftThumb"
+                       Width="10"
+                       Height="10"
+                       Cursor="SizeNWSE"
+                       DragDelta="ResizeThumb_DragDelta"
+                       Tag="TopLeft"/>
+                <Thumb x:Name="topThumb"
+                       Width="10"
+                       Height="10"
+                       Cursor="SizeNS"
+                       DragDelta="ResizeThumb_DragDelta"
+                       Tag="Top"/>
+                <Thumb x:Name="topRightThumb"
+                       Width="10"
+                       Height="10"
+                       Cursor="SizeNESW"
+                       DragDelta="ResizeThumb_DragDelta"
+                       Tag="TopRight"/>
+                <Thumb x:Name="leftThumb"
+                       Width="10"
+                       Height="10"
+                       Cursor="SizeWE"
+                       DragDelta="ResizeThumb_DragDelta"
+                       Tag="Left"/>
+                <Thumb x:Name="rightThumb"
+                       Width="10"
+                       Height="10"
+                       Cursor="SizeWE"
+                       DragDelta="ResizeThumb_DragDelta"
+                       Tag="Right"/>
+                <Thumb x:Name="bottomLeftThumb"
+                       Width="10"
+                       Height="10"
+                       Cursor="SizeNESW"
+                       DragDelta="ResizeThumb_DragDelta"
+                       Tag="BottomLeft"/>
+                <Thumb x:Name="bottomThumb"
+                       Width="10"
+                       Height="10"
+                       Cursor="SizeNS"
+                       DragDelta="ResizeThumb_DragDelta"
+                       Tag="Bottom"/>
+                <Thumb x:Name="bottomRightThumb"
+                       Width="10"
+                       Height="10"
+                       Cursor="SizeNWSE"
+                       DragDelta="ResizeThumb_DragDelta"
+                       Tag="BottomRight"/>
+            </Canvas>
+
+            <Button x:Name="btnCancelCrop"
+                    Grid.Column="1"
+                    Content="取消裁剪"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Top"
+                    Margin="10"
+                    Visibility="Collapsed"
+                    Click="btnCancelCrop_Click"/>
+
+            <Button x:Name="btnConfirmCrop"
+                    Grid.Column="1"
+                    Content="确认裁剪"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Top"
+                    Margin="10,40,10,10"
+                    Visibility="Collapsed"
+                    Click="btnConfirmCrop_Click"/>
         </Grid>
         <Grid  Grid.Row="1">
             <Grid.ColumnDefinitions>
@@ -28,38 +124,100 @@
                 <ColumnDefinition></ColumnDefinition>
                 <ColumnDefinition></ColumnDefinition>
             </Grid.ColumnDefinitions>
-            <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="20,0,20,0">
-                <Button Grid.Column="0" Height="Auto" Width="Auto" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,10,0" Name="edit_img_btn" Click="edit_img_btn_Click">编辑图片</Button>
-                <Button Grid.Column="0" Height="Auto" Width="Auto" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,10,0" Name="setting_btn" Click="setting_btn_Click">软件配置</Button>
-                <Button Grid.Column="0" Height="Auto" Width="Auto" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,10,0" Name="open_img_btn" Click="open_img_btn_Click">打开图片</Button>
-                <Button Grid.Column="0" Height="Auto" Width="Auto" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,10,0" Name="open_file_folders_btn" Click="open_file_folders_btn_Click">打开文件夹</Button>
+            <StackPanel Grid.Column="0"
+                        Orientation="Horizontal"
+                        Margin="20,0,20,0">
+                <Button Grid.Column="0"
+                        Height="Auto"
+                        Width="Auto"
+                        FontSize="14"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Margin="0,0,10,0"
+                        Name="edit_img_btn"
+                        Click="edit_img_btn_Click">裁剪</Button>
+                <Button Grid.Column="0"
+                        Height="Auto"
+                        Width="Auto"
+                        FontSize="14"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Margin="0,0,10,0"
+                        Name="setting_btn"
+                        Click="setting_btn_Click">配置</Button>
+                <Button Grid.Column="0"
+                        Height="Auto"
+                        Width="Auto"
+                        FontSize="14"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Margin="0,0,10,0"
+                        Name="open_img_btn"
+                        Click="open_img_btn_Click">图片</Button>
+                <Button Grid.Column="0"
+                        Height="Auto"
+                        Width="Auto"
+                        FontSize="14"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Margin="0,0,10,0"
+                        Name="open_file_folders_btn"
+                        Click="open_file_folders_btn_Click">文件夹</Button>
+                <Button Grid.Column="0"
+                        Height="Auto"
+                        Width="Auto"
+                        FontSize="14"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Margin="0,0,10,0"
+                        Click="open_explorer_btn_Click">系统默认打开</Button>
             </StackPanel>
-            <Grid Grid.Column="1" Width="Auto" >
+            <Grid Grid.Column="1"
+                  Width="Auto">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition></ColumnDefinition>
                     <ColumnDefinition Width="5*"></ColumnDefinition>
                     <ColumnDefinition></ColumnDefinition>
                     <ColumnDefinition Width="5*"></ColumnDefinition>
                 </Grid.ColumnDefinitions>
-                <Image Grid.Column="0"  Source="res\size_icon.png"/>
-                <TextBlock Grid.Column="1" HorizontalAlignment="Left" VerticalAlignment="Center" Name="now_img_resolution_text" Margin="5,0,0,0"></TextBlock>
-                <Image Grid.Column="2"  Source="res\save_icon.png"/>
-                <TextBlock Grid.Column="3" HorizontalAlignment="Left" Name="now_img_size_text" VerticalAlignment="Center" Margin="5,0,0,0"></TextBlock>
+                <Image Grid.Column="0"
+                       Source="res\size_icon.png"/>
+                <TextBlock Grid.Column="1"
+                           HorizontalAlignment="Left"
+                           VerticalAlignment="Center"
+                           Name="now_img_resolution_text"
+                           Margin="5,0,0,0"></TextBlock>
+                <Image Grid.Column="2"
+                       Source="res\save_icon.png"/>
+                <TextBlock Grid.Column="3"
+                           HorizontalAlignment="Left"
+                           Name="now_img_size_text"
+                           VerticalAlignment="Center"
+                           Margin="5,0,0,0"></TextBlock>
             </Grid>
-            <Grid Grid.Column="2" Width="Auto" >
+            <Grid Grid.Column="2"
+                  Width="Auto">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition></ColumnDefinition>
                     <ColumnDefinition Width="9*"></ColumnDefinition>
                     <ColumnDefinition></ColumnDefinition>
                 </Grid.ColumnDefinitions>
-                <Image Grid.Column="0"  Source="res\minus_round_icon.png"  Name="img_minus" MouseLeftButtonDown="Image_MouseLeftButtonDown"/>
-                <Slider  Grid.Column="1" VerticalAlignment="Center" Maximum="100" Minimum="0"></Slider>
-                <Image Grid.Column="2"  Source="res\plus_round_icon.png" Name="img_plus" HorizontalAlignment="Right" MouseLeftButtonDown="Image_MouseLeftButtonDown"/>
+                <Image Grid.Column="0"
+                       Source="res\minus_round_icon.png"
+                       Name="img_minus"
+                       MouseLeftButtonDown="Image_MouseLeftButtonDown"/>
+                <Slider  Grid.Column="1"
+                         VerticalAlignment="Center"
+                         Maximum="100"
+                         Minimum="0"></Slider>
+                <Image Grid.Column="2"
+                       Source="res\plus_round_icon.png"
+                       Name="img_plus"
+                       HorizontalAlignment="Right"
+                       MouseLeftButtonDown="Image_MouseLeftButtonDown"/>
             </Grid>
 
         </Grid>
-
-
     </Grid>
 
 
