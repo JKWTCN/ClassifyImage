@@ -469,6 +469,36 @@ namespace ClassifyImage
             System.Diagnostics.Process.Start("explorer.exe", img_paths[now_img_index]);
         }
 
+        private void copy_clipboard_btn_Click(object sender, RoutedEventArgs e)
+        {
+            if (now_display_img.Source == null)
+            {
+                MessageBox.Show("没有可复制的图片");
+                return;
+            }
+
+            try
+            {
+                // 获取当前显示的图片
+                var bitmapSource = now_display_img.Source as BitmapSource;
+
+                if (bitmapSource != null)
+                {
+                    // 复制到剪贴板
+                    Clipboard.SetImage(bitmapSource);
+                    MessageBox.Show("图片已复制到剪贴板");
+                }
+                else
+                {
+                    MessageBox.Show("无法复制图片");
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"复制失败: {ex.Message}");
+            }
+        }
+
         private void open_file_folders_btn_Click(object sender, RoutedEventArgs e)
         {
             Microsoft.Win32.OpenFolderDialog dialog = new();
@@ -524,16 +554,25 @@ namespace ClassifyImage
         //更新显示图片
         private void UpdataDisplayImg()
         {
-            Title = $"({now_img_index + 1}/{img_paths.Count}){img_paths[now_img_index]}";
-            now_img_path = img_paths[now_img_index];
-            BitmapImage now_bit_map_img = Tools.LoadBitmapImage(now_img_path);
-            if (now_bit_map_img == null)
+            try
             {
-                return;
+                Title = $"({now_img_index + 1}/{img_paths.Count}){img_paths[now_img_index]}";
+                now_img_path = img_paths[now_img_index];
+                BitmapImage now_bit_map_img = Tools.LoadBitmapImage(now_img_path);
+                if (now_bit_map_img == null)
+                {
+                    return;
+                }
+                now_display_img.Source = now_bit_map_img;
+                now_img_resolution_text.Text = $"{now_bit_map_img.Height}x{now_bit_map_img.Width}";
+                now_img_size_text.Text = $"{new FileInfo(now_img_path).Length / 1024}KB";
             }
-            now_display_img.Source = now_bit_map_img;
-            now_img_resolution_text.Text = $"{now_bit_map_img.Height}x{now_bit_map_img.Width}";
-            now_img_size_text.Text = $"{new FileInfo(now_img_path).Length / 1024}KB";
+            catch (Exception)
+            {
+                MessageBox.Show($"打开失败: 图片可能已移动。");
+
+            }
+
         }
         //快捷键捕捉
         private void Window_KeyUp(object sender, KeyEventArgs e)
@@ -566,6 +605,10 @@ namespace ClassifyImage
                 {
                     ProSavePath(2);
 
+                }
+                else if ((e.Key == Key.D3 || e.Key == Key.NumPad3))
+                {
+                    ProSavePath(3);
                 }
                 else if ((e.Key == Key.D4 || e.Key == Key.NumPad4))
                 {
