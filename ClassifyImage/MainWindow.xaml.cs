@@ -592,9 +592,12 @@ namespace ClassifyImage
                     return;
                 }
                 now_display_img.Source = now_bit_map_img;
-                UpdateImageSize();
                 now_img_size_text.Text = $"{new FileInfo(now_img_path).Length / 1024}KB";
+                bool restoreImageViewer = imageViewer.Visibility != Visibility.Visible;
                 RefreshImageInterface();
+                // 从图片失效提示恢复时，先让可见的图片区域完成布局，避免使用隐藏时的尺寸。
+                if (restoreImageViewer) UpdateLayout();
+                UpdateImageSize();
             }
             catch (Exception)
             {

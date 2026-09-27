@@ -165,6 +165,27 @@ internal static class Program
             Field<Button>(window, "left_btn").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
             Check(Field<string>(window, "now_img_path") == navigationPaths[0] && image.Source != null,
                 "previous button continues to A");
+            // D -> C -> deleted B -> A -> deleted B -> C must restore the image size immediately.
+            File.Copy(original, navigationPaths[2]);
+            File.Delete(navigationPaths[1]);
+            SetField(window, "now_img_index", 3);
+            Invoke(window, "UpdataDisplayImg");
+            Layout();
+            foreach (int index in new[] { 2, 1, 0 })
+            {
+                Key("Window_KeyUp", System.Windows.Input.Key.Left);
+                Layout();
+                Check(Field<int>(window, "now_img_index") == index, "backward navigation retains deleted B position");
+            }
+            foreach (int index in new[] { 1, 2 })
+            {
+                Key("Window_KeyUp", System.Windows.Input.Key.Right);
+                Layout();
+                Check(Field<int>(window, "now_img_index") == index, "forward navigation retains deleted B position");
+            }
+            Check(image.Source != null && image.ActualWidth > 100 && image.ActualHeight > 50 &&
+                Field<ScrollViewer>(window, "imageViewer").Visibility == Visibility.Visible,
+                "C renders at usable dimensions immediately after passing deleted B twice");
             string corrupt = Path.Combine(root, "corrupt.png");
             File.WriteAllText(corrupt, "invalid image data");
             Load(corrupt);
