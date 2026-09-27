@@ -362,7 +362,6 @@ namespace ClassifyImage
             string newPath = img_paths[now_img_index];
             Tools.SaveBitmap(croppedBitmap, newPath);
             now_img_path = newPath;
-            now_img_resolution_text.Text = $"{croppedBitmap.PixelWidth}x{croppedBitmap.PixelHeight}";
             now_img_size_text.Text = $"{new FileInfo(newPath).Length / 1024}KB";
 
             //MessageBox.Show($"图片已保存到: {newPath}");
@@ -552,7 +551,6 @@ namespace ClassifyImage
             {
                 now_img_path = "";
                 now_display_img.Source = null;
-                now_img_resolution_text.Text = "";
                 now_img_size_text.Text = "";
                 Title = "图片分类器（文件夹中没有图片）";
                 return;
@@ -565,19 +563,16 @@ namespace ClassifyImage
                 if (now_bit_map_img == null)
                 {
                     now_display_img.Source = null;
-                    now_img_resolution_text.Text = "";
                     now_img_size_text.Text = "";
                     return;
                 }
                 now_display_img.Source = now_bit_map_img;
                 UpdateImageSize();
-                now_img_resolution_text.Text = $"{now_bit_map_img.PixelWidth}x{now_bit_map_img.PixelHeight}";
                 now_img_size_text.Text = $"{new FileInfo(now_img_path).Length / 1024}KB";
             }
             catch (Exception)
             {
                 now_display_img.Source = null;
-                now_img_resolution_text.Text = "";
                 now_img_size_text.Text = "";
                 MessageBox.Show($"打开失败: 图片可能已移动。");
 

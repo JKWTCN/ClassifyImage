@@ -57,12 +57,27 @@ internal static class Program
             Invoke(window, "RightImg");
             Check(Field<int>(window, "now_img_index") == 0, "empty navigation is safe");
 
+            var image = Field<Image>(window, "now_display_img");
+            var resolution = Field<TextBlock>(window, "now_img_resolution_text");
+            foreach (double dpi in new[] { 72.0, 96.0, 144.0, 300.0 })
+            {
+                // 641 pixels at 300 DPI has a fractional WPF logical width.
+                image.Source = BitmapSource.Create(641, 359, dpi, dpi, PixelFormats.Bgr32,
+                    null, new byte[641 * 359 * 4], 641 * 4);
+                Layout();
+                Check(resolution.Text == "641x359", $"resolution uses integer pixels at {dpi} DPI");
+            }
+            image.Source = null;
+            Layout();
+            Check(resolution.Text == "", "resolution clears when image is cleared");
+
             string original = Path.Combine(root, "sample.png");
-            var bitmap = BitmapSource.Create(200, 100, 96, 96, PixelFormats.Bgr32, null, new byte[200 * 100 * 4], 200 * 4);
+            var bitmap = BitmapSource.Create(200, 100, 300, 300, PixelFormats.Bgr32, null, new byte[200 * 100 * 4], 200 * 4);
             var encoder = new PngBitmapEncoder();
             encoder.Frames.Add(BitmapFrame.Create(bitmap));
             using (var stream = File.Create(original)) encoder.Save(stream);
             Load(original);
+            Check(resolution.Text == "200x100", "loaded high-DPI image displays pixel dimensions");
             string category0 = Path.Combine(root, "category0");
             string category1 = Path.Combine(root, "category1");
             Setting("KeyPath0", category0);
@@ -100,6 +115,7 @@ internal static class Program
             var slider = Field<Slider>(window, "zoomSlider");
             slider.Value = 200;
             Check(Field<ScaleTransform>(window, "imageScale").ScaleX == 2, "slider updates image zoom");
+            Check(resolution.Text == "200x100", "zoom does not change resolution");
             Invoke(window, "StartCropMode");
             Check(!slider.IsEnabled, "crop prevents zoom changes");
             Field<TextBox>(window, "cropWidthInput").Text = "80";
@@ -112,6 +128,9 @@ internal static class Program
             result.UriSource = new Uri(moved);
             result.EndInit();
             Check(result.PixelWidth == 80 && result.PixelHeight == 40, "crop saves exact pixel dimensions after zoom");
+            Check(resolution.Text == "80x40", "resolution updates immediately after crop");
+            Load(moved);
+            Check(resolution.Text == "80x40", "reloading cropped image preserves pixel resolution");
             Check(slider.IsEnabled && !Directory.EnumerateFiles(category0, "*.tmp").Any(), "crop restores controls and cleans temporary file");
 
             Setting("auto_next_check", false);

@@ -211,7 +211,15 @@
                            HorizontalAlignment="Left"
                            VerticalAlignment="Center"
                            Name="now_img_resolution_text"
-                           Margin="5,0,0,0"></TextBlock>
+                           ToolTip="图片像素尺寸（宽 × 高）"
+                           Margin="5,0,0,0">
+                    <TextBlock.Text>
+                        <MultiBinding StringFormat="{}{0}x{1}" FallbackValue="">
+                            <Binding ElementName="now_display_img" Path="Source.PixelWidth"/>
+                            <Binding ElementName="now_display_img" Path="Source.PixelHeight"/>
+                        </MultiBinding>
+                    </TextBlock.Text>
+                </TextBlock>
                 <Image Grid.Column="2"
                        Source="res\save_icon.png"/>
                 <TextBlock Grid.Column="3"
