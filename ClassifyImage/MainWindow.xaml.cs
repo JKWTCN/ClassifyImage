@@ -469,7 +469,7 @@ namespace ClassifyImage
             System.Diagnostics.Process.Start("explorer.exe", img_paths[now_img_index]);
         }
 
-        private void copy_clipboard_btn_Click(object sender, RoutedEventArgs e)
+        private async void copy_clipboard_btn_Click(object sender, RoutedEventArgs e)
         {
             if (now_display_img.Source == null)
             {
@@ -484,8 +484,8 @@ namespace ClassifyImage
 
                 if (bitmapSource != null)
                 {
-                    // 复制到剪贴板
-                    Clipboard.SetImage(bitmapSource);
+                    // 剪贴板可能被其他程序短暂占用，遇到该情况时稍后重试。
+                    await CopyImageToClipboardWithRetryAsync(bitmapSource);
                     MessageBox.Show("图片已复制到剪贴板");
                 }
                 else
@@ -496,6 +496,26 @@ namespace ClassifyImage
             catch (Exception ex)
             {
                 MessageBox.Show($"复制失败: {ex.Message}");
+            }
+        }
+
+        private static async Task CopyImageToClipboardWithRetryAsync(BitmapSource bitmapSource)
+        {
+            const int clipboardCannotOpenHResult = unchecked((int)0x800401D0);
+            const int maxAttempts = 10;
+
+            for (int attempt = 1; ; attempt++)
+            {
+                try
+                {
+                    Clipboard.SetImage(bitmapSource);
+                    return;
+                }
+                catch (System.Runtime.InteropServices.COMException ex)
+                    when (ex.HResult == clipboardCannotOpenHResult && attempt < maxAttempts)
+                {
+                    await Task.Delay(25 * attempt);
+                }
             }
         }
 
