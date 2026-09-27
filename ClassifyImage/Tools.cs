@@ -7,7 +7,7 @@ namespace ClassifyImage
     static class Tools
     {
         //加载图片
-        public static BitmapImage LoadBitmapImage(String path)
+        public static BitmapImage? LoadBitmapImage(String path)
         {
             BitmapImage bitmap = new BitmapImage();
             using (MemoryStream ms = new MemoryStream(File.ReadAllBytes(path)))
@@ -25,7 +25,6 @@ namespace ClassifyImage
                 catch (System.Exception e)
                 {
                     MessageBox.Show($"错误：{path}，{e.Message}");
-                    System.Diagnostics.Process.Start("explorer.exe", path);
                     return null;
 
                 }
@@ -81,7 +80,7 @@ namespace ClassifyImage
             List<String> img_paths = new List<string>();
             for (int i = 0; i < files.Length; i++)
             {
-                if (files[i].Extension.ToLower() == ".jpg" || files[i].Extension.ToLower() == ".png" || files[i].Extension.ToLower() == ".jpeg" || files[i].Extension.ToLower() == ".bmp")
+                if (files[i].Extension.ToLowerInvariant() is ".jpg" or ".png" or ".jpeg" or ".bmp" or ".jfif")
                 {
                     img_paths.Add(files[i].FullName);
                 }
@@ -92,10 +91,53 @@ namespace ClassifyImage
         public static List<int> GetImageSize(string imagePath)
         {
             var bitmap = LoadBitmapImage(imagePath);
-            var witdh = bitmap.Width;
-            var height = bitmap.Height;
+            if (bitmap == null) throw new InvalidOperationException("无法读取图片尺寸");
+            var witdh = bitmap.PixelWidth;
+            var height = bitmap.PixelHeight;
             return new List<int> { (int)witdh, (int)height };
 
+        }
+
+        // 同名目标使用数字后缀，文件操作成功后调用方再更新图片路径。
+        public static string TransferImage(string source, string destinationFolder, bool copy)
+        {
+            source = Path.GetFullPath(source);
+            destinationFolder = Path.GetFullPath(destinationFolder);
+            Directory.CreateDirectory(destinationFolder);
+            string destination = Path.Combine(destinationFolder, Path.GetFileName(source));
+            if (string.Equals(source, destination, StringComparison.OrdinalIgnoreCase)) return source;
+            string name = Path.GetFileNameWithoutExtension(source);
+            string extension = Path.GetExtension(source);
+            int suffix = 1;
+            while (File.Exists(destination) || Directory.Exists(destination))
+                destination = Path.Combine(destinationFolder, $"{name}_{suffix++}{extension}");
+            if (copy) File.Copy(source, destination);
+            else File.Move(source, destination);
+            return destination;
+        }
+
+        // 先完整编码到同目录临时文件，避免保存失败时损坏原图。
+        public static void SaveBitmap(BitmapSource bitmap, string path)
+        {
+            BitmapEncoder encoder = Path.GetExtension(path).ToLowerInvariant() switch
+            {
+                ".jpg" or ".jpeg" or ".jfif" => new JpegBitmapEncoder(),
+                ".png" => new PngBitmapEncoder(),
+                ".bmp" => new BmpBitmapEncoder(),
+                _ => throw new NotSupportedException("不支持该图片保存格式")
+            };
+            encoder.Frames.Add(BitmapFrame.Create(bitmap));
+            string temporaryPath = path + $".{Guid.NewGuid():N}.tmp";
+            try
+            {
+                using (var stream = new FileStream(temporaryPath, FileMode.CreateNew))
+                    encoder.Save(stream);
+                File.Replace(temporaryPath, path, null);
+            }
+            finally
+            {
+                if (File.Exists(temporaryPath)) File.Delete(temporaryPath);
+            }
         }
     }
 }

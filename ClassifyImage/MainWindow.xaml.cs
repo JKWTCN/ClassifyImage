@@ -21,12 +21,8 @@ namespace ClassifyImage
         List<string> img_paths = new();
         //当前图片索引
         int now_img_index = 0;
-        //待移动目录
-        List<String> to_move_folders = new();
 
-        private Point cropStartPoint;
-        private bool isCropping = false;
-        private CroppedBitmap croppedBitmap;
+        private CroppedBitmap? croppedBitmap;
 
 
         public MainWindow()
@@ -46,12 +42,12 @@ namespace ClassifyImage
             //放大图片
             if (sender == img_plus)
             {
-
+                zoomSlider.Value += zoomSlider.SmallChange;
             }
             //缩小图片
             else if (sender == img_minus)
             {
-
+                zoomSlider.Value -= zoomSlider.SmallChange;
             }
             //上一张图片
             else if (sender == left_btn)
@@ -71,7 +67,7 @@ namespace ClassifyImage
         private void edit_img_btn_Click(object sender, RoutedEventArgs e)
         {
             //System.Diagnostics.Process.Start("explorer.exe", img_paths[now_img_index]);
-            if (now_display_img.Source == null)
+            if (img_paths.Count == 0 || now_display_img.Source == null)
             {
                 MessageBox.Show("没有可编辑的图片");
                 return;
@@ -86,6 +82,7 @@ namespace ClassifyImage
         {
             // 显示裁剪相关控件
             cropCanvas.Visibility = Visibility.Visible;
+            cropSizePanel.Visibility = Visibility.Visible;
             btnCancelCrop.Visibility = Visibility.Visible;
             btnConfirmCrop.Visibility = Visibility.Visible;
 
@@ -96,6 +93,11 @@ namespace ClassifyImage
             open_file_folders_btn.IsEnabled = false;
             left_btn.IsEnabled = false;
             right_btn.IsEnabled = false;
+
+            ClearClassificationKeys();
+            zoomSlider.IsEnabled = false;
+            img_plus.IsEnabled = false;
+            img_minus.IsEnabled = false;
 
             // 初始化裁剪画布大小
             cropCanvas.Width = now_display_img.ActualWidth;
@@ -146,6 +148,7 @@ namespace ClassifyImage
             SetThumbPosition(bottomThumb, centerX - bottomThumb.Width / 2, bottom - bottomThumb.Height / 2);
             SetThumbPosition(leftThumb, left - leftThumb.Width / 2, centerY - leftThumb.Height / 2);
             SetThumbPosition(rightThumb, right - rightThumb.Width / 2, centerY - rightThumb.Height / 2);
+            UpdateCropSizeInputs();
         }
 
         private void SetThumbPosition(Thumb thumb, double left, double top)
@@ -271,6 +274,7 @@ namespace ClassifyImage
         {
             // 隐藏裁剪相关控件
             cropCanvas.Visibility = Visibility.Collapsed;
+            cropSizePanel.Visibility = Visibility.Collapsed;
             cropRectangle.Visibility = Visibility.Collapsed;
             btnCancelCrop.Visibility = Visibility.Collapsed;
             btnConfirmCrop.Visibility = Visibility.Collapsed;
@@ -291,7 +295,13 @@ namespace ClassifyImage
             left_btn.IsEnabled = true;
             right_btn.IsEnabled = true;
 
+            zoomSlider.IsEnabled = true;
+            img_plus.IsEnabled = true;
+            img_minus.IsEnabled = true;
+            _isDragging = false;
+            cropRectangle.ReleaseMouseCapture();
             isInitialized = false;
+            UpdateImageSize();
         }
         private void btnConfirmCrop_Click(object sender, RoutedEventArgs e)
         {
@@ -304,10 +314,10 @@ namespace ClassifyImage
             try
             {
                 // 获取裁剪区域
-                var x = (int)Canvas.GetLeft(cropRectangle);
-                var y = (int)Canvas.GetTop(cropRectangle);
-                var width = (int)cropRectangle.Width;
-                var height = (int)cropRectangle.Height;
+                var x = Canvas.GetLeft(cropRectangle);
+                var y = Canvas.GetTop(cropRectangle);
+                var width = cropRectangle.Width;
+                var height = cropRectangle.Height;
 
                 // 获取原始图片
                 var source = (BitmapSource)now_display_img.Source;
@@ -319,8 +329,8 @@ namespace ClassifyImage
                 // 计算实际裁剪区域
                 int actualX = (int)(x * scaleX);
                 int actualY = (int)(y * scaleY);
-                int actualWidth = (int)(width * scaleX);
-                int actualHeight = (int)(height * scaleY);
+                int actualWidth = Math.Max(1, (int)Math.Round(width * scaleX));
+                int actualHeight = Math.Max(1, (int)Math.Round(height * scaleY));
 
                 // 确保裁剪区域在图片范围内
                 if (actualX < 0) actualX = 0;
@@ -334,11 +344,8 @@ namespace ClassifyImage
                 croppedBitmap = new CroppedBitmap(source,
                     new System.Windows.Int32Rect(actualX, actualY, actualWidth, actualHeight));
 
-                // 显示裁剪后的图片
-                now_display_img.Source = croppedBitmap;
-
-                // 保存裁剪后的图片
                 SaveCroppedImage();
+                now_display_img.Source = croppedBitmap;
 
                 EndCropMode();
             }
@@ -352,43 +359,10 @@ namespace ClassifyImage
         {
             if (croppedBitmap == null) return;
 
-            // 生成保存路径
-            string originalPath = img_paths[now_img_index];
-            string directory = Path.GetDirectoryName(originalPath);
-            string fileName = Path.GetFileNameWithoutExtension(originalPath);
-            string extension = Path.GetExtension(originalPath);
-            //string newPath = Path.Combine(directory, $"{fileName}_cropped{extension}");
             string newPath = img_paths[now_img_index];
-
-            // 确保文件名唯一
-            //int counter = 1;
-            //while (File.Exists(newPath))
-            //{
-            //    newPath = Path.Combine(directory, $"{fileName}_cropped_{counter}{extension}");
-            //    counter++;
-            //}
-
-            // 保存图片
-            using (var fileStream = new FileStream(newPath, FileMode.Create))
-            {
-                BitmapEncoder encoder = extension.ToLower() switch
-                {
-                    ".jpg" or ".jpeg" => new JpegBitmapEncoder(),
-                    ".png" => new PngBitmapEncoder(),
-                    ".bmp" => new BmpBitmapEncoder(),
-                    _ => new PngBitmapEncoder()
-                };
-
-                encoder.Frames.Add(BitmapFrame.Create(croppedBitmap));
-                encoder.Save(fileStream);
-            }
-
-            // 更新当前图片路径
-            img_paths[now_img_index] = newPath;
+            Tools.SaveBitmap(croppedBitmap, newPath);
             now_img_path = newPath;
-
-            // 更新显示信息
-            now_img_resolution_text.Text = $"{croppedBitmap.PixelHeight}x{croppedBitmap.PixelWidth}";
+            now_img_resolution_text.Text = $"{croppedBitmap.PixelWidth}x{croppedBitmap.PixelHeight}";
             now_img_size_text.Text = $"{new FileInfo(newPath).Length / 1024}KB";
 
             //MessageBox.Show($"图片已保存到: {newPath}");
@@ -458,15 +432,23 @@ namespace ClassifyImage
             if (result == true)
             {
                 string filename = dialog.FileName;
+                now_folder_path = Path.GetDirectoryName(filename) ?? "";
                 img_paths = new List<string>([filename]);
                 now_img_index = 0;
+                ClearClassificationKeys();
+                zoomSlider.Value = 100;
                 UpdataDisplayImg();
             }
         }
 
         private void open_explorer_btn_Click(object sender, RoutedEventArgs e)
         {
-            System.Diagnostics.Process.Start("explorer.exe", img_paths[now_img_index]);
+            if (img_paths.Count == 0) return;
+            try
+            {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(now_img_path) { UseShellExecute = true });
+            }
+            catch (Exception ex) { MessageBox.Show($"打开失败: {ex.Message}"); }
         }
 
         private async void copy_clipboard_btn_Click(object sender, RoutedEventArgs e)
@@ -532,204 +514,75 @@ namespace ClassifyImage
                 now_folder_path = fullPathToFolder;
                 img_paths = new List<string>(Tools.GetImages(fullPathToFolder));
                 now_img_index = 0;
+                ClearClassificationKeys();
+                zoomSlider.Value = 100;
                 UpdataDisplayImg();
             }
         }
-        //上一张图片
         private void LeftImg()
         {
+            if (isInitialized || img_paths.Count == 0) return;
+            ClearClassificationKeys();
             now_img_index = (now_img_index + img_paths.Count - 1) % img_paths.Count;
             UpdataDisplayImg();
-            //GC.Collect();
         }
-        //下一张图片
+
         private void RightImg()
         {
-            if (ClassifyImage.Settings.Default.default_path_check)
+            if (isInitialized || img_paths.Count == 0) return;
+            ClearClassificationKeys();
+            if (Settings.Default.default_path_check &&
+                string.Equals(Path.GetDirectoryName(now_img_path), now_folder_path, StringComparison.OrdinalIgnoreCase))
             {
-                if (ClassifyImage.Settings.Default.default_path != "")
-                {
-                    FileInfo now_file_info = new FileInfo(img_paths[now_img_index]);
-                    if (now_file_info.DirectoryName == now_folder_path)
-                    {
-                        var old_index = now_img_index;
-                        var to_path = $"{ClassifyImage.Settings.Default.default_path}\\{new FileInfo(img_paths[old_index]).Name}";
-                        if (!File.Exists(to_path))
-                            File.Move(img_paths[old_index], to_path);
-                        img_paths[old_index] = to_path;
-                    }
-                }
-                else
-                {
-                    MessageBox.Show($"未设置下一步默认保存路径，请到软件配置中配置");
-                    return;
-                }
+                if (!MoveCurrentImage(Settings.Default.default_path)) return;
             }
+            AdvanceImage();
+        }
+
+        private void AdvanceImage()
+        {
             now_img_index = (now_img_index + 1) % img_paths.Count;
             UpdataDisplayImg();
-            //GC.Collect();
-
         }
 
         //更新显示图片
         private void UpdataDisplayImg()
         {
+            if (img_paths.Count == 0)
+            {
+                now_img_path = "";
+                now_display_img.Source = null;
+                now_img_resolution_text.Text = "";
+                now_img_size_text.Text = "";
+                Title = "图片分类器（文件夹中没有图片）";
+                return;
+            }
             try
             {
                 Title = $"({now_img_index + 1}/{img_paths.Count}){img_paths[now_img_index]}";
                 now_img_path = img_paths[now_img_index];
-                BitmapImage now_bit_map_img = Tools.LoadBitmapImage(now_img_path);
+                BitmapImage? now_bit_map_img = Tools.LoadBitmapImage(now_img_path);
                 if (now_bit_map_img == null)
                 {
+                    now_display_img.Source = null;
+                    now_img_resolution_text.Text = "";
+                    now_img_size_text.Text = "";
                     return;
                 }
                 now_display_img.Source = now_bit_map_img;
-                now_img_resolution_text.Text = $"{now_bit_map_img.Height}x{now_bit_map_img.Width}";
+                UpdateImageSize();
+                now_img_resolution_text.Text = $"{now_bit_map_img.PixelWidth}x{now_bit_map_img.PixelHeight}";
                 now_img_size_text.Text = $"{new FileInfo(now_img_path).Length / 1024}KB";
             }
             catch (Exception)
             {
+                now_display_img.Source = null;
+                now_img_resolution_text.Text = "";
+                now_img_size_text.Text = "";
                 MessageBox.Show($"打开失败: 图片可能已移动。");
 
             }
 
-        }
-        //快捷键捕捉
-        private void Window_KeyUp(object sender, KeyEventArgs e)
-        {
-            //MessageBox.Show($"您按下了键:{e.KeyStates}");
-            //同时按下
-            // if (e.KeyStates == Keyboard.GetKeyStates(Key.C) && Keyboard.Modifiers == ModifierKeys.Alt)
-            if (e.Key == Key.Left)
-            {
-                LeftImg();
-            }
-            else if (e.Key == Key.Right)
-            {
-                RightImg();
-            }
-
-            if (!ClassifyImage.Settings.Default.mut_kind_check)
-            {
-                if ((e.Key == Key.D0 || e.Key == Key.NumPad0))
-                {
-                    ProSavePath(0);
-
-                }
-                else if ((e.Key == Key.D1 || e.Key == Key.NumPad1))
-                {
-                    ProSavePath(1);
-
-                }
-                else if ((e.Key == Key.D2 || e.Key == Key.NumPad2))
-                {
-                    ProSavePath(2);
-
-                }
-                else if ((e.Key == Key.D3 || e.Key == Key.NumPad3))
-                {
-                    ProSavePath(3);
-                }
-                else if ((e.Key == Key.D4 || e.Key == Key.NumPad4))
-                {
-                    ProSavePath(4);
-
-                }
-                else if ((e.Key == Key.D5 || e.Key == Key.NumPad5))
-                {
-                    ProSavePath(5);
-
-                }
-                else if ((e.Key == Key.D6 || e.Key == Key.NumPad6))
-                {
-                    ProSavePath(6);
-                }
-                else if ((e.Key == Key.D7 || e.Key == Key.NumPad7))
-                {
-                    ProSavePath(7);
-
-                }
-                else if ((e.Key == Key.D8 || e.Key == Key.NumPad8))
-                {
-
-                    ProSavePath(8);
-                }
-                else if ((e.Key == Key.D9 || e.Key == Key.NumPad9))
-                {
-
-                    ProSavePath(9);
-                }
-
-
-
-            }
-            void ProSavePath(int num)
-            {
-                String KeyPath = "";
-                switch (num)
-                {
-                    case 0:
-                        KeyPath = ClassifyImage.Settings.Default.KeyPath0;
-                        break;
-                    case 1:
-                        KeyPath = ClassifyImage.Settings.Default.KeyPath1;
-                        break;
-                    case 2:
-                        KeyPath = ClassifyImage.Settings.Default.KeyPath2;
-                        break;
-                    case 3:
-                        KeyPath = ClassifyImage.Settings.Default.KeyPath3;
-                        break;
-                    case 4:
-                        KeyPath = ClassifyImage.Settings.Default.KeyPath4;
-                        break;
-                    case 5:
-                        KeyPath = ClassifyImage.Settings.Default.KeyPath5;
-                        break;
-                    case 6:
-                        KeyPath = ClassifyImage.Settings.Default.KeyPath6;
-                        break;
-                    case 7:
-                        KeyPath = ClassifyImage.Settings.Default.KeyPath7;
-                        break;
-                    case 8:
-                        KeyPath = ClassifyImage.Settings.Default.KeyPath8;
-                        break;
-                    case 9:
-                        KeyPath = ClassifyImage.Settings.Default.KeyPath9;
-                        break;
-                    default:
-                        KeyPath = ".";
-                        break;
-                }
-                if (KeyPath != "")
-                {
-                    if (!ClassifyImage.Settings.Default.auto_next_check)
-                    {
-                        var old_index = now_img_index;
-                        var to_path = $"{KeyPath}\\{new FileInfo(img_paths[old_index]).Name}";
-                        if (!File.Exists(to_path))
-                            File.Move(img_paths[old_index], to_path);
-                        img_paths[old_index] = to_path;
-                        UpdataDisplayImg();
-                    }
-                    else
-                    {
-                        var old_index = now_img_index;
-                        RightImg();
-                        var to_path = $"{KeyPath}\\{new FileInfo(img_paths[old_index]).Name}";
-                        if (!File.Exists(to_path))
-                            File.Move(img_paths[old_index], to_path);
-                        img_paths[old_index] = to_path;
-                    }
-                }
-                else
-                {
-                    MessageBox.Show($"未设置分类{num}保存路径");
-                    return;
-                }
-
-            }
         }
     }
 }

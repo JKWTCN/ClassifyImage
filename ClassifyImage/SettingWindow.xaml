@@ -201,7 +201,7 @@
                         <RowDefinition Height="Auto"></RowDefinition>
 
                     </Grid.RowDefinitions>
-                    <Image Grid.Row="0" Source="D:\WORKSPACE\Code\VS\ClassifyImage\ClassifyImage\res\face.jpg"></Image>
+                    <Image Grid.Row="0" Source="res/face.jpg"></Image>
                     <Grid Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center">
                         <Grid.RowDefinitions>
                             <RowDefinition></RowDefinition>

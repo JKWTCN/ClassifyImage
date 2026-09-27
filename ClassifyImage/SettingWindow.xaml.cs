@@ -7,6 +7,7 @@ namespace ClassifyImage
     /// </summary>
     public partial class SettingWindow : Window
     {
+        private bool initializing = true;
         public SettingWindow()
         {
             InitializeComponent();
@@ -27,6 +28,7 @@ namespace ClassifyImage
             MyGO_easter_egg_check.IsChecked = ClassifyImage.Settings.Default.MyGO_easter_egg_check;
             default_path_check.IsChecked = ClassifyImage.Settings.Default.default_path_check;
             file_order_combo.SelectedIndex = ClassifyImage.Settings.Default.file_order_combo;
+            initializing = false;
           
 
         }
@@ -118,6 +120,7 @@ namespace ClassifyImage
         }
         private void HandleCheck(object sender, RoutedEventArgs e)
         {
+            if (initializing) return;
             if (sender == auto_next_check)
             {
                 ClassifyImage.Settings.Default.auto_next_check = true;
@@ -143,6 +146,7 @@ namespace ClassifyImage
 
         private void HandleUnchecked(object sender, RoutedEventArgs e)
         {
+            if (initializing) return;
             if (sender == auto_next_check)
             {
                 ClassifyImage.Settings.Default.auto_next_check = false;
@@ -185,6 +189,7 @@ namespace ClassifyImage
 
         private void file_order_combo_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
         {
+            if (initializing || file_order_combo.SelectedIndex < 0) return;
             ClassifyImage.Settings.Default.file_order_combo = file_order_combo.SelectedIndex;
             ClassifyImage.Settings.Default.Save();
         }

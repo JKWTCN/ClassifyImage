@@ -8,7 +8,9 @@
         Title="图片分类器"
         Height="450"
         Width="800"
-        KeyUp="Window_KeyUp">
+        KeyDown="Window_KeyDown"
+        KeyUp="Window_KeyUp"
+        Deactivated="Window_Deactivated">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="10*"></RowDefinition>
@@ -26,18 +28,17 @@
                     VerticalAlignment="Center"
                     Name="left_btn"
                     MouseLeftButtonDown="Image_MouseLeftButtonDown"></Image>
-            <Image  Source="res\MyGO_easter_egg.jpg"
-                    Grid.Column="1"
-                    Name="now_display_img"/>
-            <Image  Source="res\arrow_right.png"
-                    Grid.Column="2"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center"
-                    Name="right_btn"
-                    MouseLeftButtonDown="Image_MouseLeftButtonDown"></Image>
-            <!-- 添加裁剪相关控件 -->
+            <ScrollViewer x:Name="imageViewer" Grid.Column="1"
+                          HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"
+                          SizeChanged="ImageViewer_SizeChanged">
+                <Grid x:Name="imageSurface" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <Grid.LayoutTransform>
+                        <ScaleTransform x:Name="imageScale"/>
+                    </Grid.LayoutTransform>
+                    <Image Source="res\MyGO_easter_egg.jpg" Name="now_display_img" Stretch="Fill"/>
+            <!-- 裁剪画布与图片使用同一坐标系 -->
             <Canvas x:Name="cropCanvas"
-                    Grid.Column="1"
+                    HorizontalAlignment="Center" VerticalAlignment="Center"
                     Visibility="Collapsed"
                     Background="Transparent">
                 <Rectangle x:Name="cropRectangle"
@@ -99,6 +100,11 @@
                        DragDelta="ResizeThumb_DragDelta"
                        Tag="BottomRight"/>
             </Canvas>
+                </Grid>
+            </ScrollViewer>
+            <Image Source="res\arrow_right.png" Grid.Column="2"
+                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                   Name="right_btn" MouseLeftButtonDown="Image_MouseLeftButtonDown"/>
 
             <Button x:Name="btnCancelCrop"
                     Grid.Column="1"
@@ -108,6 +114,16 @@
                     Margin="10"
                     Visibility="Collapsed"
                     Click="btnCancelCrop_Click"/>
+
+            <StackPanel x:Name="cropSizePanel" Grid.Column="1" Orientation="Horizontal"
+                        HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10"
+                        Background="White" Visibility="Collapsed">
+                <TextBlock Text="裁剪尺寸：" VerticalAlignment="Center"/>
+                <TextBox x:Name="cropWidthInput" Width="55" ToolTip="宽度（像素）"/>
+                <TextBlock Text=" × " VerticalAlignment="Center"/>
+                <TextBox x:Name="cropHeightInput" Width="55" ToolTip="高度（像素）"/>
+                <Button Content="应用尺寸" Click="ApplyCropSize_Click" Margin="5,0,0,0"/>
+            </StackPanel>
 
             <Button x:Name="btnConfirmCrop"
                     Grid.Column="1"
@@ -215,10 +231,12 @@
                        Source="res\minus_round_icon.png"
                        Name="img_minus"
                        MouseLeftButtonDown="Image_MouseLeftButtonDown"/>
-                <Slider  Grid.Column="1"
+                <Slider  Grid.Column="1" x:Name="zoomSlider"
                          VerticalAlignment="Center"
-                         Maximum="100"
-                         Minimum="0"></Slider>
+                         Maximum="400" Minimum="25" Value="100"
+                         SmallChange="25" LargeChange="50"
+                         ToolTip="缩放比例（100% 为适应窗口）"
+                         ValueChanged="ZoomSlider_ValueChanged"></Slider>
                 <Image Grid.Column="2"
                        Source="res\plus_round_icon.png"
                        Name="img_plus"
