@@ -1,7 +1,5 @@
 using System.IO;
 using System.Reflection;
-using System.Runtime.InteropServices;
-using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -12,16 +10,6 @@ using ClassifyImage;
 
 internal static class Program
 {
-    private delegate bool EnumWindowCallback(IntPtr window, IntPtr parameter);
-    [DllImport("kernel32.dll")]
-    private static extern uint GetCurrentThreadId();
-    [DllImport("user32.dll")]
-    private static extern bool EnumThreadWindows(uint threadId, EnumWindowCallback callback, IntPtr parameter);
-    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
-    private static extern int GetClassName(IntPtr window, StringBuilder className, int maxCount);
-    [DllImport("user32.dll")]
-    private static extern bool PostMessage(IntPtr window, uint message, IntPtr wParam, IntPtr lParam);
-
     private const BindingFlags Private = BindingFlags.Instance | BindingFlags.NonPublic;
     private static object Invoke(object instance, string method, params object[] arguments) =>
         instance.GetType().GetMethod(method, Private)!.Invoke(instance, arguments)!;
@@ -140,7 +128,7 @@ internal static class Program
                     RoutedEvent = method == "Window_KeyDown" ? Keyboard.KeyDownEvent : Keyboard.KeyUpEvent
                 });
 
-            // Reproduce D -> deleted C -> B -> A, including dismissal of the real error dialog.
+            // Reproduce D -> deleted C -> B -> A without a blocking error dialog.
             var navigationPaths = new[] { "A.png", "B.png", "C.png", "D.png" }
                 .Select(name => Path.Combine(root, name)).ToList();
             foreach (string path in navigationPaths) File.Copy(original, path);
@@ -148,25 +136,11 @@ internal static class Program
             SetField(window, "now_img_index", 3);
             Invoke(window, "UpdataDisplayImg");
             File.Delete(navigationPaths[2]);
-            bool dismissedMissingImageDialog = false;
-            uint uiThreadId = GetCurrentThreadId();
-            var dialogTimer = new System.Windows.Threading.DispatcherTimer
-            {
-                Interval = TimeSpan.FromMilliseconds(50)
-            };
-            dialogTimer.Tick += (_, _) => EnumThreadWindows(uiThreadId, (handle, _) =>
-            {
-                var className = new StringBuilder(256);
-                GetClassName(handle, className, className.Capacity);
-                if (className.ToString() != "#32770") return true;
-                dismissedMissingImageDialog = PostMessage(handle, 0x0111, new IntPtr(1), IntPtr.Zero);
-                return false;
-            }, IntPtr.Zero);
-            dialogTimer.Start();
-            try { Key("Window_KeyUp", System.Windows.Input.Key.Left); }
-            finally { dialogTimer.Stop(); }
-            Check(dismissedMissingImageDialog && image.Source == null && Field<int>(window, "now_img_index") == 2,
-                "deleted image shows a dismissible error and preserves navigation position");
+            Key("Window_KeyUp", System.Windows.Input.Key.Left);
+            Check(image.Source == null && Field<int>(window, "now_img_index") == 2 &&
+                Field<StackPanel>(window, "emptyState").Visibility == Visibility.Visible,
+                "deleted image shows an inline message and preserves navigation position");
+            Screenshot(window, "main-missing", 860, 560);
             Check(Field<Button>(window, "left_btn").IsEnabled && Field<Button>(window, "right_btn").IsEnabled &&
                 !Field<Button>(window, "edit_img_btn").IsEnabled && categoryButtons.All(button => !button.IsEnabled),
                 "missing image keeps navigation enabled while disabling image actions");
@@ -180,7 +154,7 @@ internal static class Program
                 !Directory.Exists(Path.Combine(root, "missing-image-default")),
                 "forward navigation from missing image bypasses default move");
             Setting("default_path_check", false);
-            // Restore the failed C position without reopening its already verified dialog.
+            // Restore the failed C position to verify backward navigation.
             SetField(window, "now_img_index", 2);
             SetField(window, "now_img_path", navigationPaths[2]);
             image.Source = null;
@@ -191,6 +165,11 @@ internal static class Program
             Field<Button>(window, "left_btn").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
             Check(Field<string>(window, "now_img_path") == navigationPaths[0] && image.Source != null,
                 "previous button continues to A");
+            string corrupt = Path.Combine(root, "corrupt.png");
+            File.WriteAllText(corrupt, "invalid image data");
+            Load(corrupt);
+            Check(image.Source == null && Field<StackPanel>(window, "emptyState").Visibility == Visibility.Visible,
+                "corrupt image shows the central unavailable state without a dialog");
             Load(original);
 
             Key("Window_KeyDown", System.Windows.Input.Key.D0);
@@ -210,6 +189,9 @@ internal static class Program
             Check(!File.Exists(original) && Path.GetFileName(moved) == "sample_1.png" &&
                 File.Exists(Path.Combine(category0, "sample.png")), "single classification resolves collisions");
             Check(!Directory.Exists(Path.Combine(root, "default")), "auto advance bypasses default move");
+            Check(Field<TextBlock>(window, "statusText").Text == "已移动到分类 0" &&
+                Field<StackPanel>(window, "emptyState").Visibility == Visibility.Collapsed,
+                "successful classification keeps feedback in the status bar and the image visible");
 
             var slider = Field<Slider>(window, "zoomSlider");
             slider.Value = 200;
@@ -246,6 +228,20 @@ internal static class Program
             Check(Field<System.Windows.Controls.Border>(window, "cropToolbar").Visibility == Visibility.Visible &&
                 categoryButtons.All(button => !button.IsEnabled), "crop shows toolbar and disables classification");
             Screenshot(window, "main-crop", 860, 560);
+            Layout(860, 560);
+            var toolbar = Field<Border>(window, "cropToolbar");
+            var contentRoot = (FrameworkElement)window.Content;
+            Check(toolbar.TranslatePoint(new Point(0, toolbar.ActualHeight), contentRoot).Y <=
+                viewer.TranslatePoint(new Point(0, 0), contentRoot).Y,
+                "crop toolbar reserves space above the image at minimum size");
+            var openButton = Field<Button>(window, "open_file_folders_btn");
+            Check(Math.Abs(toolbar.TranslatePoint(new Point(0, toolbar.ActualHeight / 2), contentRoot).Y -
+                openButton.TranslatePoint(new Point(0, openButton.ActualHeight / 2), contentRoot).Y) < 2 &&
+                toolbar.TranslatePoint(new Point(0, 0), contentRoot).X >
+                openButton.TranslatePoint(new Point(openButton.ActualWidth, 0), contentRoot).X,
+                "crop controls stay on the right in the same toolbar row at minimum size");
+            Check(toolbar.ActualWidth + toolbar.Margin.Left + toolbar.Margin.Right >= toolbar.DesiredSize.Width - 1,
+                "crop controls fit without clipping at minimum size");
             Layout();
             Field<TextBox>(window, "cropWidthInput").Text = "80";
             Field<TextBox>(window, "cropHeightInput").Text = "40";

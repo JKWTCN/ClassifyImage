@@ -16,11 +16,22 @@
    </Border.Resources>
    <DockPanel>
     <Button x:Name="setting_btn" DockPanel.Dock="Right" Content="配置" Click="setting_btn_Click" ToolTip="分类目录与软件选项（F2）" Focusable="False"/>
+  <Border x:Name="cropToolbar" DockPanel.Dock="Right" Margin="12,0,12,0" Visibility="Collapsed">
+   <StackPanel Orientation="Horizontal">
+    <StackPanel x:Name="cropSizePanel" Orientation="Horizontal" Visibility="Collapsed">
+     <TextBlock Text="裁剪像素 " VerticalAlignment="Center"/><TextBox x:Name="cropWidthInput" Width="64"/><TextBlock Text=" × " VerticalAlignment="Center"/><TextBox x:Name="cropHeightInput" Width="64"/>
+     <Button Content="应用" Click="ApplyCropSize_Click" Margin="8,0,0,0" Focusable="False"/>
+    </StackPanel>
+    <Button x:Name="btnConfirmCrop" Content="保存裁剪" Style="{StaticResource PrimaryButton}" Click="btnConfirmCrop_Click" Visibility="Collapsed" Margin="12,0,6,0" Focusable="False"/>
+    <Button x:Name="btnCancelCrop" Content="取消" Click="btnCancelCrop_Click" Visibility="Collapsed" ToolTip="Esc" Focusable="False"/>
+   </StackPanel>
+  </Border>
     <WrapPanel Orientation="Horizontal">
      <StackPanel Orientation="Horizontal">
      <Button x:Name="open_file_folders_btn" Style="{StaticResource PrimaryButton}" Content="打开文件夹" Click="open_file_folders_btn_Click" Margin="0,0,8,0" ToolTip="Ctrl + Shift + O" Focusable="False"/>
      <Button x:Name="open_img_btn" Content="打开图片" Click="open_img_btn_Click" ToolTip="Ctrl + O" Focusable="False"/>
      </StackPanel>
+     <StackPanel x:Name="imageBrowseTools" Orientation="Horizontal">
      <Border Width="1" Background="#E2E8F0" Margin="12,4"/>
      <StackPanel Orientation="Horizontal" x:Name="imageActions">
       <Button x:Name="edit_img_btn" Content="裁剪" Click="edit_img_btn_Click" ToolTip="E" Margin="0,0,6,0" Focusable="False"/>
@@ -40,6 +51,7 @@
       <Button Width="54" Margin="6,0,8,0" Click="ResetZoom_Click" ToolTip="恢复适应窗口" Focusable="False">
        <TextBlock Text="{Binding ElementName=zoomSlider, Path=Value, StringFormat={}{0:0}%}"/>
       </Button>
+     </StackPanel>
      </StackPanel>
     </WrapPanel>
    </DockPanel>
@@ -161,15 +173,6 @@
     </StackPanel>
    </Grid>
   </Border>
-  <Border Grid.Row="1" x:Name="cropToolbar" Style="{StaticResource Card}" VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,8,228,0" Padding="10" Visibility="Collapsed">
-   <StackPanel Orientation="Horizontal">
-    <StackPanel x:Name="cropSizePanel" Orientation="Horizontal" Visibility="Collapsed">
-     <TextBlock Text="裁剪像素 " VerticalAlignment="Center"/><TextBox x:Name="cropWidthInput" Width="64"/><TextBlock Text=" × " VerticalAlignment="Center"/><TextBox x:Name="cropHeightInput" Width="64"/>
-     <Button Content="应用" Click="ApplyCropSize_Click" Margin="8,0,0,0" Focusable="False"/>
-    </StackPanel>
-    <Button x:Name="btnConfirmCrop" Content="保存裁剪" Style="{StaticResource PrimaryButton}" Click="btnConfirmCrop_Click" Visibility="Collapsed" Margin="12,0,6,0" Focusable="False"/>
-    <Button x:Name="btnCancelCrop" Content="取消" Click="btnCancelCrop_Click" Visibility="Collapsed" ToolTip="Esc" Focusable="False"/>
-   </StackPanel>
-  </Border>
+
  </Grid></Border>
 </Window>

@@ -83,11 +83,12 @@ public partial class MainWindow
         fileNameText.ToolTip = hasImages ? now_img_path : null;
         imageActions.IsEnabled = loaded && !isInitialized;
         left_btn.IsEnabled = right_btn.IsEnabled = hasImages && !isInitialized;
-        emptyStateTitle.Text = hasImages ? "当前图片无法打开" : "准备好下一组图片了吗？";
+        emptyStateTitle.Text = hasImages ? "图片已移动、删除或无法打开" : "准备好下一组图片了吗？";
         emptyStateHint.Text = hasImages ? "图片可能已删除或移动，可使用左右方向键继续浏览" : "打开图片文件夹，使用数字键快速分类";
         emptyState.Visibility = hasPreview ? Visibility.Collapsed : Visibility.Visible;
         imageViewer.Visibility = hasPreview ? Visibility.Visible : Visibility.Collapsed;
         cropToolbar.Visibility = isInitialized ? Visibility.Visible : Visibility.Collapsed;
+        imageBrowseTools.Visibility = isInitialized ? Visibility.Collapsed : Visibility.Visible;
         RefreshCategoryButtons();
     }
 

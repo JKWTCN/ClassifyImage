@@ -22,9 +22,8 @@ namespace ClassifyImage
                     bitmap.EndInit();
                     bitmap.Freeze();
                 }
-                catch (System.Exception e)
+                catch (System.Exception)
                 {
-                    MessageBox.Show($"错误：{path}，{e.Message}");
                     return null;
 
                 }

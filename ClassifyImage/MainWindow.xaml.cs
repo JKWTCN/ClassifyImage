@@ -82,6 +82,15 @@ namespace ClassifyImage
         private void StartCropMode()
         {
             EndImagePan();
+            // 顶栏先参与布局，再以新的图片显示尺寸初始化裁剪区域。
+            cropToolbar.Visibility = Visibility.Visible;
+            imageBrowseTools.Visibility = Visibility.Collapsed;
+            cropSizePanel.Visibility = Visibility.Visible;
+            btnCancelCrop.Visibility = Visibility.Visible;
+            btnConfirmCrop.Visibility = Visibility.Visible;
+            UpdateLayout();
+            UpdateImageSize();
+            UpdateLayout();
             // 显示裁剪相关控件
             cropCanvas.Visibility = Visibility.Visible;
             cropSizePanel.Visibility = Visibility.Visible;
@@ -592,7 +601,6 @@ namespace ClassifyImage
                 now_display_img.Source = null;
                 now_img_size_text.Text = "";
                 RefreshImageInterface();
-                MessageBox.Show($"打开失败: 图片可能已移动。");
 
             }
 
