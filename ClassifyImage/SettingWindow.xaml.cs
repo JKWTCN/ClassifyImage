@@ -29,9 +29,14 @@ namespace ClassifyImage
             default_path_check.IsChecked = ClassifyImage.Settings.Default.default_path_check;
             file_order_combo.SelectedIndex = ClassifyImage.Settings.Default.file_order_combo;
             initializing = false;
+            foreach (var text in new[] { path_0_text, path_1_text, path_2_text, path_3_text, path_4_text,
+                path_5_text, path_6_text, path_7_text, path_8_text, path_9_text, default_path })
+                if (string.IsNullOrWhiteSpace(text.Text)) text.Text = "未设置目录";
           
 
         }
+
+        private void CloseSettings_Click(object sender, RoutedEventArgs e) => Close();
 
         private void ChooseSaveClick(object sender, RoutedEventArgs e)
         {

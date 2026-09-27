@@ -32,6 +32,7 @@ namespace ClassifyImage
             {
                 now_display_img.Source = null;
             }
+            InitializeInterface();
 
         }
 
@@ -80,6 +81,7 @@ namespace ClassifyImage
 
         private void StartCropMode()
         {
+            EndImagePan();
             // 显示裁剪相关控件
             cropCanvas.Visibility = Visibility.Visible;
             cropSizePanel.Visibility = Visibility.Visible;
@@ -121,7 +123,9 @@ namespace ClassifyImage
 
             // 立即更新Thumb位置
             isInitialized = true;
+            UpdatePanCursor();
             UpdateResizeThumbsPosition();
+            RefreshImageInterface();
 
 
         }
@@ -301,7 +305,9 @@ namespace ClassifyImage
             _isDragging = false;
             cropRectangle.ReleaseMouseCapture();
             isInitialized = false;
+            UpdatePanCursor();
             UpdateImageSize();
+            RefreshImageInterface();
         }
         private void btnConfirmCrop_Click(object sender, RoutedEventArgs e)
         {
@@ -414,7 +420,14 @@ namespace ClassifyImage
         }
         private void setting_btn_Click(object sender, RoutedEventArgs e)
         {
-            SettingWindow settingWindow = new();
+            if (activeSettingsWindow != null)
+            {
+                activeSettingsWindow.Activate();
+                return;
+            }
+            SettingWindow settingWindow = new() { Owner = this };
+            activeSettingsWindow = settingWindow;
+            settingWindow.Closed += (_, _) => activeSettingsWindow = null;
             if (ClassifyImage.Settings.Default.control_main_setting_windows_check)
                 settingWindow.Show();
             else
@@ -467,7 +480,7 @@ namespace ClassifyImage
                 {
                     // 剪贴板可能被其他程序短暂占用，遇到该情况时稍后重试。
                     await CopyImageToClipboardWithRetryAsync(bitmapSource);
-                    MessageBox.Show("图片已复制到剪贴板");
+                    statusText.Text = "图片已复制到剪贴板";
                 }
                 else
                 {
@@ -547,12 +560,14 @@ namespace ClassifyImage
         //更新显示图片
         private void UpdataDisplayImg()
         {
+            EndImagePan();
             if (img_paths.Count == 0)
             {
                 now_img_path = "";
                 now_display_img.Source = null;
                 now_img_size_text.Text = "";
                 Title = "图片分类器（文件夹中没有图片）";
+                RefreshImageInterface();
                 return;
             }
             try
@@ -564,16 +579,19 @@ namespace ClassifyImage
                 {
                     now_display_img.Source = null;
                     now_img_size_text.Text = "";
+                    RefreshImageInterface();
                     return;
                 }
                 now_display_img.Source = now_bit_map_img;
                 UpdateImageSize();
                 now_img_size_text.Text = $"{new FileInfo(now_img_path).Length / 1024}KB";
+                RefreshImageInterface();
             }
             catch (Exception)
             {
                 now_display_img.Source = null;
                 now_img_size_text.Text = "";
+                RefreshImageInterface();
                 MessageBox.Show($"打开失败: 图片可能已移动。");
 
             }

@@ -13,6 +13,7 @@ namespace ClassifyImage
         private void ZoomSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             if (imageScale == null || isInitialized) return;
+            EndImagePan();
             imageScale.ScaleX = imageScale.ScaleY = e.NewValue / 100;
         }
 
@@ -67,7 +68,11 @@ namespace ClassifyImage
             UpdateResizeThumbsPosition();
         }
 
-        private void Window_Deactivated(object? sender, EventArgs e) => ClearClassificationKeys();
+        private void Window_Deactivated(object? sender, EventArgs e)
+        {
+            ClearClassificationKeys();
+            EndImagePan();
+        }
 
         private void Window_KeyDown(object sender, KeyEventArgs e)
         {
@@ -131,6 +136,9 @@ namespace ClassifyImage
                 }
                 if (Settings.Default.auto_next_check) AdvanceImage();
                 else UpdataDisplayImg();
+                statusText.Text = Settings.Default.mut_kind_check
+                    ? $"已复制到分类 {string.Join("、", categories)}"
+                    : $"已移动到分类 {categories[0]}";
             }
             catch (Exception ex)
             {

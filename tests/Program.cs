@@ -22,7 +22,7 @@ internal static class Program
     }
 
     [STAThread]
-    private static void Main()
+    private static void Main(string[] args)
     {
         string root = Path.Combine(Path.GetTempPath(), "ClassifyImage-tests-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(root);
@@ -37,12 +37,28 @@ internal static class Program
             Setting("mut_kind_check", false);
             Setting("default_path_check", false);
             var window = new MainWindow();
-            void Layout()
+            void Layout(double width = 1000, double height = 700)
             {
                 var content = (FrameworkElement)window.Content;
-                content.Measure(new Size(1000, 700));
-                content.Arrange(new Rect(0, 0, 1000, 700));
+                content.Measure(new Size(width, height));
+                content.Arrange(new Rect(0, 0, width, height));
                 content.UpdateLayout();
+            }
+            void Screenshot(Window target, string name, int width, int height)
+            {
+                if (!args.Contains("--screenshots")) return;
+                var content = (FrameworkElement)target.Content;
+                content.Measure(new Size(width, height));
+                content.Arrange(new Rect(0, 0, width, height));
+                content.UpdateLayout();
+                var rendered = new RenderTargetBitmap(width, height, 96, 96, PixelFormats.Pbgra32);
+                rendered.Render(content);
+                var png = new PngBitmapEncoder();
+                png.Frames.Add(BitmapFrame.Create(rendered));
+                string output = Path.Combine(Path.GetTempPath(), "ClassifyImage-ui-review");
+                Directory.CreateDirectory(output);
+                using (var stream = File.Create(Path.Combine(output, name + ".png"))) png.Save(stream);
+                Console.WriteLine("SCREENSHOT " + Path.Combine(output, name + ".png"));
             }
             void Load(string path)
             {
@@ -56,6 +72,10 @@ internal static class Program
             Invoke(window, "LeftImg");
             Invoke(window, "RightImg");
             Check(Field<int>(window, "now_img_index") == 0, "empty navigation is safe");
+            Check(!Field<Button>(window, "edit_img_btn").IsEnabled &&
+                Field<StackPanel>(window, "emptyState").Visibility == Visibility.Visible,
+                "empty state disables unavailable image actions");
+            Screenshot(window, "main-empty", 1160, 740);
 
             var image = Field<Image>(window, "now_display_img");
             var resolution = Field<TextBlock>(window, "now_img_resolution_text");
@@ -83,6 +103,19 @@ internal static class Program
             Setting("KeyPath0", category0);
             Setting("KeyPath1", category1);
             Setting("mut_kind_check", true);
+            var categoryButtons = Field<List<Button>>(window, "categoryButtons");
+            Check(categoryButtons.Count == 10 && categoryButtons[0].IsEnabled && !categoryButtons[2].IsEnabled,
+                "sidebar enables configured categories only");
+            Check(Field<CheckBox>(window, "quickMultiCategory").IsChecked == true,
+                "sidebar synchronizes classification settings");
+            Layout(860, 560);
+            var actions = Field<StackPanel>(window, "imageActions");
+            var filename = Field<TextBlock>(window, "fileNameText");
+            Screenshot(window, "main-compact", 860, 560);
+            Check(filename.ActualWidth > 0 && actions.ActualWidth + actions.Margin.Left + actions.Margin.Right + 1 >= actions.DesiredSize.Width,
+                "minimum window keeps image actions and filename visible");
+            Screenshot(window, "main-loaded", 1160, 740);
+            Layout();
 
             // Exercise a complete overlapping key chord using a hidden input source.
             using var inputSource = new HwndSource(new HwndSourceParameters("ClassifyImage smoke tests")
@@ -116,8 +149,38 @@ internal static class Program
             slider.Value = 200;
             Check(Field<ScaleTransform>(window, "imageScale").ScaleX == 2, "slider updates image zoom");
             Check(resolution.Text == "200x100", "zoom does not change resolution");
+            Layout();
+            var viewer = Field<ScrollViewer>(window, "imageViewer");
+            Check(viewer.ScrollableWidth > 100 && viewer.ScrollableHeight > 30,
+                "zoomed image exceeds viewport in both directions");
+            Check((bool)Invoke(window, "BeginImagePan", new Point(150, 100)), "zoomed image starts panning");
+            Invoke(window, "MoveImagePan", new Point(90, 70));
+            Layout();
+            Check(Math.Abs(viewer.HorizontalOffset - 60) < 1 && Math.Abs(viewer.VerticalOffset - 30) < 1,
+                "drag pans image by viewport distance");
+            Invoke(window, "MoveImagePan", new Point(10000, 10000));
+            Layout();
+            Check(viewer.HorizontalOffset == 0 && viewer.VerticalOffset == 0, "panning clamps at image start");
+            Invoke(window, "MoveImagePan", new Point(-10000, -10000));
+            Layout();
+            Check(Math.Abs(viewer.HorizontalOffset - viewer.ScrollableWidth) < 1 &&
+                Math.Abs(viewer.VerticalOffset - viewer.ScrollableHeight) < 1, "panning clamps at image end");
+            Invoke(window, "Window_Deactivated", window, EventArgs.Empty);
+            Check(!Field<bool>(window, "isPanning"), "losing window focus ends panning");
+            slider.Value = 100;
+            Layout();
+            Check(!(bool)Invoke(window, "BeginImagePan", new Point(100, 100)), "fitted image does not start panning");
+            slider.Value = 200;
+            Layout();
+            Invoke(window, "BeginImagePan", new Point(100, 100));
             Invoke(window, "StartCropMode");
+            Check(!Field<bool>(window, "isPanning") && !(bool)Invoke(window, "BeginImagePan", new Point(100, 100)),
+                "crop mode ends and prevents image panning");
             Check(!slider.IsEnabled, "crop prevents zoom changes");
+            Check(Field<System.Windows.Controls.Border>(window, "cropToolbar").Visibility == Visibility.Visible &&
+                categoryButtons.All(button => !button.IsEnabled), "crop shows toolbar and disables classification");
+            Screenshot(window, "main-crop", 860, 560);
+            Layout();
             Field<TextBox>(window, "cropWidthInput").Text = "80";
             Field<TextBox>(window, "cropHeightInput").Text = "40";
             Invoke(window, "ApplyCropSize_Click", window, new RoutedEventArgs());
@@ -138,6 +201,9 @@ internal static class Program
             var settingsWindow = new SettingWindow();
             Check(!(bool)settings.GetType().GetProperty("auto_next_check")!.GetValue(settings)! &&
                 (bool)settings.GetType().GetProperty("mut_kind_check")!.GetValue(settings)!, "settings initialization preserves options");
+            Screenshot(settingsWindow, "settings-directories", 740, 680);
+            Field<TabControl>(settingsWindow, "settingsTabs").SelectedIndex = 1;
+            Screenshot(settingsWindow, "settings-behavior", 740, 680);
             settingsWindow.Close();
             window.Close();
             application.Shutdown();
