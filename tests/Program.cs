@@ -1,5 +1,7 @@
 using System.IO;
 using System.Reflection;
+using System.Runtime.InteropServices;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -10,6 +12,16 @@ using ClassifyImage;
 
 internal static class Program
 {
+    private delegate bool EnumWindowCallback(IntPtr window, IntPtr parameter);
+    [DllImport("kernel32.dll")]
+    private static extern uint GetCurrentThreadId();
+    [DllImport("user32.dll")]
+    private static extern bool EnumThreadWindows(uint threadId, EnumWindowCallback callback, IntPtr parameter);
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    private static extern int GetClassName(IntPtr window, StringBuilder className, int maxCount);
+    [DllImport("user32.dll")]
+    private static extern bool PostMessage(IntPtr window, uint message, IntPtr wParam, IntPtr lParam);
+
     private const BindingFlags Private = BindingFlags.Instance | BindingFlags.NonPublic;
     private static object Invoke(object instance, string method, params object[] arguments) =>
         instance.GetType().GetMethod(method, Private)!.Invoke(instance, arguments)!;
@@ -127,6 +139,60 @@ internal static class Program
                 {
                     RoutedEvent = method == "Window_KeyDown" ? Keyboard.KeyDownEvent : Keyboard.KeyUpEvent
                 });
+
+            // Reproduce D -> deleted C -> B -> A, including dismissal of the real error dialog.
+            var navigationPaths = new[] { "A.png", "B.png", "C.png", "D.png" }
+                .Select(name => Path.Combine(root, name)).ToList();
+            foreach (string path in navigationPaths) File.Copy(original, path);
+            SetField(window, "img_paths", navigationPaths);
+            SetField(window, "now_img_index", 3);
+            Invoke(window, "UpdataDisplayImg");
+            File.Delete(navigationPaths[2]);
+            bool dismissedMissingImageDialog = false;
+            uint uiThreadId = GetCurrentThreadId();
+            var dialogTimer = new System.Windows.Threading.DispatcherTimer
+            {
+                Interval = TimeSpan.FromMilliseconds(50)
+            };
+            dialogTimer.Tick += (_, _) => EnumThreadWindows(uiThreadId, (handle, _) =>
+            {
+                var className = new StringBuilder(256);
+                GetClassName(handle, className, className.Capacity);
+                if (className.ToString() != "#32770") return true;
+                dismissedMissingImageDialog = PostMessage(handle, 0x0111, new IntPtr(1), IntPtr.Zero);
+                return false;
+            }, IntPtr.Zero);
+            dialogTimer.Start();
+            try { Key("Window_KeyUp", System.Windows.Input.Key.Left); }
+            finally { dialogTimer.Stop(); }
+            Check(dismissedMissingImageDialog && image.Source == null && Field<int>(window, "now_img_index") == 2,
+                "deleted image shows a dismissible error and preserves navigation position");
+            Check(Field<Button>(window, "left_btn").IsEnabled && Field<Button>(window, "right_btn").IsEnabled &&
+                !Field<Button>(window, "edit_img_btn").IsEnabled && categoryButtons.All(button => !button.IsEnabled),
+                "missing image keeps navigation enabled while disabling image actions");
+            Check(Field<TextBlock>(window, "imageCounter").Text == "3 / 4" &&
+                Field<TextBlock>(window, "emptyStateHint").Text.Contains("方向键"),
+                "missing image retains its counter and explains continued navigation");
+            Setting("default_path_check", true);
+            Setting("default_path", Path.Combine(root, "missing-image-default"));
+            Key("Window_KeyUp", System.Windows.Input.Key.Right);
+            Check(Field<string>(window, "now_img_path") == navigationPaths[3] && image.Source != null &&
+                !Directory.Exists(Path.Combine(root, "missing-image-default")),
+                "forward navigation from missing image bypasses default move");
+            Setting("default_path_check", false);
+            // Restore the failed C position without reopening its already verified dialog.
+            SetField(window, "now_img_index", 2);
+            SetField(window, "now_img_path", navigationPaths[2]);
+            image.Source = null;
+            Invoke(window, "RefreshImageInterface");
+            Key("Window_KeyUp", System.Windows.Input.Key.Left);
+            Check(Field<string>(window, "now_img_path") == navigationPaths[1] && image.Source != null,
+                "left key returns to B after deleted C");
+            Field<Button>(window, "left_btn").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            Check(Field<string>(window, "now_img_path") == navigationPaths[0] && image.Source != null,
+                "previous button continues to A");
+            Load(original);
+
             Key("Window_KeyDown", System.Windows.Input.Key.D0);
             Key("Window_KeyDown", System.Windows.Input.Key.NumPad1);
             Key("Window_KeyUp", System.Windows.Input.Key.D0);

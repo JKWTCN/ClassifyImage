@@ -543,7 +543,7 @@ namespace ClassifyImage
         {
             if (isInitialized || img_paths.Count == 0) return;
             ClearClassificationKeys();
-            if (Settings.Default.default_path_check &&
+            if (now_display_img.Source != null && Settings.Default.default_path_check &&
                 string.Equals(Path.GetDirectoryName(now_img_path), now_folder_path, StringComparison.OrdinalIgnoreCase))
             {
                 if (!MoveCurrentImage(Settings.Default.default_path)) return;
