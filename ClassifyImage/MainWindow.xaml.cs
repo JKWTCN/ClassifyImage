@@ -21,6 +21,7 @@ namespace ClassifyImage
         List<string> img_paths = new();
         //当前图片索引
         int now_img_index = 0;
+        private Exception? imageLoadError;
 
         private CroppedBitmap? croppedBitmap;
 
@@ -570,6 +571,7 @@ namespace ClassifyImage
         private void UpdataDisplayImg()
         {
             EndImagePan();
+            imageLoadError = null;
             if (img_paths.Count == 0)
             {
                 now_img_path = "";
@@ -583,14 +585,7 @@ namespace ClassifyImage
             {
                 Title = $"({now_img_index + 1}/{img_paths.Count}){img_paths[now_img_index]}";
                 now_img_path = img_paths[now_img_index];
-                BitmapImage? now_bit_map_img = Tools.LoadBitmapImage(now_img_path);
-                if (now_bit_map_img == null)
-                {
-                    now_display_img.Source = null;
-                    now_img_size_text.Text = "";
-                    RefreshImageInterface();
-                    return;
-                }
+                BitmapImage now_bit_map_img = Tools.LoadBitmapImage(now_img_path);
                 now_display_img.Source = now_bit_map_img;
                 now_img_size_text.Text = $"{new FileInfo(now_img_path).Length / 1024}KB";
                 bool restoreImageViewer = imageViewer.Visibility != Visibility.Visible;
@@ -599,8 +594,9 @@ namespace ClassifyImage
                 if (restoreImageViewer) UpdateLayout();
                 UpdateImageSize();
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                imageLoadError = ex;
                 now_display_img.Source = null;
                 now_img_size_text.Text = "";
                 RefreshImageInterface();

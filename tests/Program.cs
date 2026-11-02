@@ -98,6 +98,30 @@ internal static class Program
             using (var stream = File.Create(original)) encoder.Save(stream);
             Load(original);
             Check(resolution.Text == "200x100", "loaded high-DPI image displays pixel dimensions");
+            Check(image.Source is BitmapImage normal && normal.CreateOptions == BitmapCreateOptions.None,
+                "normal images retain default color handling");
+            // A truncated EXIF orientation directory makes WPF's ColorContexts read fail.
+            // Use generated pixels and metadata rather than a copy of a user's image.
+            string malformedMetadata = Path.Combine(root, "jpeg-with-incomplete-exif.PNG");
+            var jpegEncoder = new JpegBitmapEncoder();
+            jpegEncoder.Frames.Add(BitmapFrame.Create(bitmap));
+            using (var jpeg = new MemoryStream())
+            {
+                jpegEncoder.Save(jpeg);
+                byte[] bytes = jpeg.ToArray();
+                using var output = File.Create(malformedMetadata);
+                output.Write(bytes, 0, 2);
+                output.Write(Convert.FromHexString("FFE1001E4578696600004D4D002A000000080001011200030000000100010000"));
+                output.Write(bytes, 2, bytes.Length - 2);
+            }
+            Load(malformedMetadata);
+            Check(image.Source is BitmapImage recovered && recovered.PixelWidth == 200 && recovered.PixelHeight == 100 &&
+                recovered.CreateOptions == BitmapCreateOptions.IgnoreColorProfile && recovered.IsFrozen &&
+                Field<StackPanel>(window, "emptyState").Visibility == Visibility.Collapsed,
+                "JPEG with PNG extension and incomplete EXIF loads via color profile fallback");
+            File.Delete(malformedMetadata);
+            Check(!File.Exists(malformedMetadata), "fallback releases the source file");
+            Load(original);
             string category0 = Path.Combine(root, "category0");
             string category1 = Path.Combine(root, "category1");
             Setting("KeyPath0", category0);
@@ -140,6 +164,8 @@ internal static class Program
             Check(image.Source == null && Field<int>(window, "now_img_index") == 2 &&
                 Field<StackPanel>(window, "emptyState").Visibility == Visibility.Visible,
                 "deleted image shows an inline message and preserves navigation position");
+            Check(Field<TextBlock>(window, "emptyStateTitle").Text == "图片文件不存在",
+                "missing file is identified separately from decoding failures");
             Screenshot(window, "main-missing", 860, 560);
             Check(Field<Button>(window, "left_btn").IsEnabled && Field<Button>(window, "right_btn").IsEnabled &&
                 !Field<Button>(window, "edit_img_btn").IsEnabled && categoryButtons.All(button => !button.IsEnabled),
@@ -191,7 +217,12 @@ internal static class Program
             Load(corrupt);
             Check(image.Source == null && Field<StackPanel>(window, "emptyState").Visibility == Visibility.Visible,
                 "corrupt image shows the central unavailable state without a dialog");
+            Check(Field<TextBlock>(window, "emptyStateTitle").Text == "图片读取失败" &&
+                Field<TextBlock>(window, "emptyStateHint").ToolTip is string,
+                "unreadable file reports a load failure with error details");
             Load(original);
+            Check(Field<TextBlock>(window, "emptyStateHint").ToolTip == null,
+                "successful load clears the previous error");
 
             Key("Window_KeyDown", System.Windows.Input.Key.D0);
             Key("Window_KeyDown", System.Windows.Input.Key.NumPad1);

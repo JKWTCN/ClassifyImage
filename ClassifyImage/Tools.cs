@@ -7,29 +7,31 @@ namespace ClassifyImage
     static class Tools
     {
         //加载图片
-        public static BitmapImage? LoadBitmapImage(String path)
+        public static BitmapImage LoadBitmapImage(String path)
         {
-            BitmapImage bitmap = new BitmapImage();
-            using (MemoryStream ms = new MemoryStream(File.ReadAllBytes(path)))
+            byte[] bytes = File.ReadAllBytes(path);
+            try
             {
-                try
-                {
-                    bitmap = new BitmapImage();
-                    //bitmap.DecodePixelHeight = 100;
-                    bitmap.BeginInit();
-                    bitmap.CacheOption = BitmapCacheOption.OnLoad;//设置缓存模式
-                    bitmap.StreamSource = ms;//通过StreamSource加载图片
-                    bitmap.EndInit();
-                    bitmap.Freeze();
-                }
-                catch (System.Exception)
-                {
-                    return null;
-
-                }
-
+                return DecodeBitmap(BitmapCreateOptions.None);
             }
-            return bitmap;
+            catch (IOException)
+            {
+                // 某些图片的颜色信息无法被 WPF 读取，保留像素并跳过颜色配置重试。
+                return DecodeBitmap(BitmapCreateOptions.IgnoreColorProfile);
+            }
+
+            BitmapImage DecodeBitmap(BitmapCreateOptions options)
+            {
+                using var stream = new MemoryStream(bytes);
+                var bitmap = new BitmapImage();
+                bitmap.BeginInit();
+                bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                bitmap.CreateOptions = options;
+                bitmap.StreamSource = stream;
+                bitmap.EndInit();
+                bitmap.Freeze();
+                return bitmap;
+            }
         }
 
 
@@ -90,7 +92,6 @@ namespace ClassifyImage
         public static List<int> GetImageSize(string imagePath)
         {
             var bitmap = LoadBitmapImage(imagePath);
-            if (bitmap == null) throw new InvalidOperationException("无法读取图片尺寸");
             var witdh = bitmap.PixelWidth;
             var height = bitmap.PixelHeight;
             return new List<int> { (int)witdh, (int)height };

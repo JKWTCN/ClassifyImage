@@ -83,8 +83,12 @@ public partial class MainWindow
         fileNameText.ToolTip = hasImages ? now_img_path : null;
         imageActions.IsEnabled = loaded && !isInitialized;
         left_btn.IsEnabled = right_btn.IsEnabled = hasImages && !isInitialized;
-        emptyStateTitle.Text = hasImages ? "图片已移动、删除或无法打开" : "准备好下一组图片了吗？";
-        emptyStateHint.Text = hasImages ? "图片可能已删除或移动，可使用左右方向键继续浏览" : "打开图片文件夹，使用数字键快速分类";
+        bool missing = imageLoadError is FileNotFoundException or DirectoryNotFoundException;
+        emptyStateTitle.Text = hasImages ? missing ? "图片文件不存在" : "图片读取失败" : "准备好下一组图片了吗？";
+        emptyStateHint.Text = hasImages
+            ? missing ? "文件可能已删除或移动，可使用左右方向键继续浏览" : "图片格式、数据或访问权限可能有问题，可使用左右方向键继续浏览"
+            : "打开图片文件夹，使用数字键快速分类";
+        emptyStateHint.ToolTip = imageLoadError?.Message;
         emptyState.Visibility = hasPreview ? Visibility.Collapsed : Visibility.Visible;
         imageViewer.Visibility = hasPreview ? Visibility.Visible : Visibility.Collapsed;
         cropToolbar.Visibility = isInitialized ? Visibility.Visible : Visibility.Collapsed;
