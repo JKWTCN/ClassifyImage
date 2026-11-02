@@ -475,6 +475,16 @@ namespace ClassifyImage
             catch (Exception ex) { MessageBox.Show($"打开失败: {ex.Message}"); }
         }
 
+        private void select_in_explorer_btn_Click(object sender, RoutedEventArgs e)
+        {
+            if (img_paths.Count == 0) return;
+            try
+            {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("explorer.exe", $"/select,\"{now_img_path}\"") { UseShellExecute = true });
+            }
+            catch (Exception ex) { MessageBox.Show($"定位图片失败: {ex.Message}"); }
+        }
+
         private async void copy_clipboard_btn_Click(object sender, RoutedEventArgs e)
         {
             if (now_display_img.Source == null)

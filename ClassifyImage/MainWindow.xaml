@@ -36,7 +36,8 @@
      <StackPanel Orientation="Horizontal" x:Name="imageActions">
       <Button x:Name="edit_img_btn" Content="裁剪" Click="edit_img_btn_Click" ToolTip="E" Margin="0,0,6,0" Focusable="False"/>
       <Button x:Name="copy_clipboard_btn" Content="复制" Click="copy_clipboard_btn_Click" ToolTip="复制图片（Ctrl + C）" Margin="0,0,6,0" Focusable="False"/>
-      <Button x:Name="externalOpenButton" Content="外部打开" Click="open_explorer_btn_Click" Focusable="False"/>
+      <Button x:Name="externalOpenButton" Content="外部打开" Click="open_explorer_btn_Click" Margin="0,0,6,0" Focusable="False"/>
+      <Button x:Name="externalSelectButton" Content="外部选择" Click="select_in_explorer_btn_Click" ToolTip="在资源管理器中选中当前图片" Focusable="False"/>
      </StackPanel>
      <Border Width="1" Background="#E2E8F0" Margin="8,4"/>
      <StackPanel Orientation="Horizontal">
