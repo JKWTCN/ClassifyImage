@@ -34,6 +34,7 @@ namespace ClassifyImage
                 now_display_img.Source = null;
             }
             InitializeInterface();
+            Closed += (_, _) => StopImageAnimation();
 
         }
 
@@ -82,6 +83,7 @@ namespace ClassifyImage
 
         private void StartCropMode()
         {
+            if (Tools.IsGifOrWebP(now_img_path)) return;
             EndImagePan();
             // 顶栏先参与布局，再以新的图片显示尺寸初始化裁剪区域。
             cropToolbar.Visibility = Visibility.Visible;
@@ -449,7 +451,7 @@ namespace ClassifyImage
             var dialog = new Microsoft.Win32.OpenFileDialog();
             dialog.FileName = ".."; // Default file name
             dialog.DefaultExt = ".jpg"; // Default file extension
-            dialog.Filter = "图片|*.jpg;*.jpeg;*.bmp;*.jfif;*.png;";
+            dialog.Filter = Tools.ImageFileFilter;
             bool? result = dialog.ShowDialog();
             if (result == true)
             {
@@ -571,6 +573,7 @@ namespace ClassifyImage
         private void UpdataDisplayImg()
         {
             EndImagePan();
+            StopImageAnimation();
             imageLoadError = null;
             if (img_paths.Count == 0)
             {
@@ -585,8 +588,7 @@ namespace ClassifyImage
             {
                 Title = $"({now_img_index + 1}/{img_paths.Count}){img_paths[now_img_index]}";
                 now_img_path = img_paths[now_img_index];
-                BitmapImage now_bit_map_img = Tools.LoadBitmapImage(now_img_path);
-                now_display_img.Source = now_bit_map_img;
+                LoadDisplayImage();
                 now_img_size_text.Text = $"{new FileInfo(now_img_path).Length / 1024}KB";
                 bool restoreImageViewer = imageViewer.Visibility != Visibility.Visible;
                 RefreshImageInterface();
@@ -596,6 +598,7 @@ namespace ClassifyImage
             }
             catch (Exception ex)
             {
+                StopImageAnimation();
                 imageLoadError = ex;
                 now_display_img.Source = null;
                 now_img_size_text.Text = "";

@@ -14,6 +14,8 @@
 
 常用快捷键：`Ctrl + O` 打开图片、`Ctrl + Shift + O` 打开文件夹、`F2` 打开配置、`E` 裁剪、`Ctrl + C` 复制图片。`Ctrl + 滚轮` 缩放，点击缩放百分比恢复适应窗口。
 
+支持 JPG、JPEG、JFIF、PNG、BMP、GIF 和 WebP。GIF 和 WebP 动图按帧间隔与循环次数自动播放，支持缩放、复制当前帧和分类；分类保留原文件格式及动画。GIF / WebP 暂不支持裁剪。
+
 图片放大超出显示区域后，可按住图片上的鼠标左键拖动平移；裁剪模式下拖动仍用于调整裁剪区域。
 
 构建：`dotnet build ClassifyImage.sln`。

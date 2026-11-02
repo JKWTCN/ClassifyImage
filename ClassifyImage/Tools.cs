@@ -6,6 +6,11 @@ namespace ClassifyImage
 {
     static class Tools
     {
+        public const string ImageFileFilter = "图片|*.jpg;*.jpeg;*.bmp;*.jfif;*.png;*.gif;*.webp";
+
+        public static bool IsGifOrWebP(string path) =>
+            Path.GetExtension(path).ToLowerInvariant() is ".gif" or ".webp";
+
         //加载图片
         public static BitmapImage LoadBitmapImage(String path)
         {
@@ -81,7 +86,7 @@ namespace ClassifyImage
             List<String> img_paths = new List<string>();
             for (int i = 0; i < files.Length; i++)
             {
-                if (files[i].Extension.ToLowerInvariant() is ".jpg" or ".png" or ".jpeg" or ".bmp" or ".jfif")
+                if (files[i].Extension.ToLowerInvariant() is ".jpg" or ".png" or ".jpeg" or ".bmp" or ".jfif" or ".gif" or ".webp")
                 {
                     img_paths.Add(files[i].FullName);
                 }

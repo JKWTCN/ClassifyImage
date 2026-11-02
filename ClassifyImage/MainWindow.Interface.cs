@@ -82,6 +82,8 @@ public partial class MainWindow
         imageCounter.Text = hasImages ? $"{now_img_index + 1} / {img_paths.Count}" : "";
         fileNameText.ToolTip = hasImages ? now_img_path : null;
         imageActions.IsEnabled = loaded && !isInitialized;
+        edit_img_btn.IsEnabled = loaded && !isInitialized && !Tools.IsGifOrWebP(now_img_path);
+        edit_img_btn.ToolTip = Tools.IsGifOrWebP(now_img_path) ? "GIF / WebP 支持浏览与分类，暂不支持裁剪" : "E";
         left_btn.IsEnabled = right_btn.IsEnabled = hasImages && !isInitialized;
         bool missing = imageLoadError is FileNotFoundException or DirectoryNotFoundException;
         emptyStateTitle.Text = hasImages ? missing ? "图片文件不存在" : "图片读取失败" : "准备好下一组图片了吗？";

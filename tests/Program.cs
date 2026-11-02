@@ -6,6 +6,7 @@ using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Threading;
 using ClassifyImage;
 
 internal static class Program
@@ -151,6 +152,86 @@ internal static class Program
                 {
                     RoutedEvent = method == "Window_KeyDown" ? Keyboard.KeyDownEvent : Keyboard.KeyUpEvent
                 });
+
+            // Small independent Pillow-encoded fixtures: 4x3 pixels, red/blue frames,
+            // transparent top-left pixel, 70/130 ms delays, two complete plays.
+            string formats = Path.Combine(root, "formats");
+            Directory.CreateDirectory(formats);
+            string gif = Path.Combine(formats, "animated.GIF");
+            string webp = Path.Combine(formats, "animated.WebP");
+            string staticGif = Path.Combine(formats, "static.gif");
+            string staticWebp = Path.Combine(formats, "static.webp");
+            File.WriteAllBytes(gif, Convert.FromBase64String("R0lGODlhBAADAIEAAP8AAAAAAAAAAAAAACH/C05FVFNDQVBFMi4wAwEBAAAh+QQJBwABACwAAAAABAADAAAICQADABhIsCCAgAAh+QQJDQABACwAAAAABAADAIEAAP8AAAAAAAAAAAAICQADABhIsCCAgAA7"));
+            File.WriteAllBytes(webp, Convert.FromBase64String("UklGRogAAABXRUJQVlA4WAoAAAASAAAAAwAAAgAAQU5JTQYAAAAAAAAAAgBBTk1GKgAAAAAAAAAAAAMAAAIAAEYAAAJWUDhMEgAAAC8DgAAQDxDzH/MfjDs8RPQ/DEFOTUYqAAAAAAAAAAAAAwAAAgAAggAAAFZQOEwSAAAALwOAABAPEDH/8x+MOzxE9D8M"));
+            File.WriteAllBytes(staticGif, Convert.FromBase64String("R0lGODdhBAADAIEAAP8AAAAAAAAAAAAAACwAAAAABAADAAAICAABCBxIUGBAADs="));
+            File.WriteAllBytes(staticWebp, Convert.FromBase64String("UklGRhwAAABXRUJQVlA4TA8AAAAvA4AAEAcQ/Y8CBiKi/wEA"));
+            File.WriteAllText(Path.Combine(formats, "ignored.txt"), "not an image");
+            var tools = typeof(MainWindow).Assembly.GetType("ClassifyImage.Tools")!;
+            var scanned = (string[])tools.GetMethod("GetImages")!.Invoke(null, new object[] { formats })!;
+            Check(scanned.Length == 4 && new[] { gif, webp, staticGif, staticWebp }.All(scanned.Contains),
+                "folder scanning includes GIF and WebP regardless of extension case");
+            byte[] Pixels()
+            {
+                var source = (BitmapSource)image.Source!;
+                byte[] pixels = new byte[source.PixelWidth * source.PixelHeight * 4];
+                source.CopyPixels(pixels, source.PixelWidth * 4, 0);
+                return pixels;
+            }
+            foreach (string path in new[] { gif, webp })
+            {
+                Load(path);
+                var timer = Field<DispatcherTimer>(window, "animationTimer");
+                Check(resolution.Text == "4x3" && Pixels()[3] == 0 && Pixels()[6] == 255 &&
+                    timer.IsEnabled && timer.Interval.TotalMilliseconds == 70,
+                    $"{Path.GetExtension(path)} animation starts with correct pixels, transparency and delay");
+                Invoke(window, "StartCropMode");
+                Check(!Field<Button>(window, "edit_img_btn").IsEnabled && !Field<bool>(window, "isInitialized") &&
+                    Field<Button>(window, "copy_clipboard_btn").IsEnabled && categoryButtons[0].IsEnabled,
+                    "new formats allow copying and classification while preventing crop");
+                Invoke(window, "AnimationTimer_Tick", timer, EventArgs.Empty);
+                Check(Pixels()[4] == 255 && Pixels()[6] == 0 && timer.Interval.TotalMilliseconds == 130,
+                    "animation advances to the blue frame with its own delay");
+                Invoke(window, "AnimationTimer_Tick", timer, EventArgs.Empty);
+                Check(Pixels()[6] == 255 && timer.IsEnabled, "animation repeats from its first frame");
+                Invoke(window, "AnimationTimer_Tick", timer, EventArgs.Empty);
+                Invoke(window, "AnimationTimer_Tick", timer, EventArgs.Empty);
+                Check(!timer.IsEnabled && Pixels()[4] == 255, "finite animation stops on its final frame after two plays");
+                Load(original);
+                Check(Field<object>(window, "imageAnimation") == null && Field<object>(window, "animationTimer") == null &&
+                    Field<Button>(window, "edit_img_btn").IsEnabled, "navigation disposes animation and restores static image actions");
+            }
+            foreach (string path in new[] { staticGif, staticWebp })
+            {
+                Load(path);
+                Check(resolution.Text == "4x3" && Field<object>(window, "animationTimer") == null,
+                    $"static {Path.GetExtension(path)} displays without an animation timer");
+            }
+            Check(Pixels()[3] == 128 && Pixels()[6] == 255, "static WebP preserves partial alpha and channel order");
+            Load(webp);
+            var activeAnimationTimer = Field<DispatcherTimer>(window, "animationTimer");
+            string animationCategory = Path.Combine(root, "animation-category");
+            Setting("KeyPath3", animationCategory);
+            byte[] animationBytes = File.ReadAllBytes(webp);
+            Invoke(window, "ClassifyCurrentImage", (object)new[] { 3 });
+            Check(!activeAnimationTimer.IsEnabled && File.ReadAllBytes(webp).SequenceEqual(animationBytes) &&
+                File.ReadAllBytes(Path.Combine(animationCategory, Path.GetFileName(webp))).SequenceEqual(animationBytes),
+                "classifying a playing animation copies the unchanged file and replaces its timer");
+            Setting("mut_kind_check", false);
+            Invoke(window, "ClassifyCurrentImage", (object)new[] { 3 });
+            Check(!File.Exists(webp) && File.ReadAllBytes(Field<string>(window, "now_img_path")).SequenceEqual(animationBytes) &&
+                Field<DispatcherTimer>(window, "animationTimer").IsEnabled,
+                "playing WebP can be moved without a file lock and continues playing");
+            Setting("mut_kind_check", true);
+            Setting("KeyPath3", "");
+            Load(gif);
+            activeAnimationTimer = Field<DispatcherTimer>(window, "animationTimer");
+            string invalidWebp = Path.Combine(root, "invalid.webp");
+            File.WriteAllText(invalidWebp, "invalid image data");
+            Load(invalidWebp);
+            Check(!activeAnimationTimer.IsEnabled && image.Source == null &&
+                Field<TextBlock>(window, "emptyStateTitle").Text == "图片读取失败",
+                "invalid WebP stops the preceding animation and shows the load failure");
+            Load(original);
 
             // Reproduce D -> deleted C -> B -> A without a blocking error dialog.
             var navigationPaths = new[] { "A.png", "B.png", "C.png", "D.png" }
@@ -319,7 +400,11 @@ internal static class Program
             Field<TabControl>(settingsWindow, "settingsTabs").SelectedIndex = 1;
             Screenshot(settingsWindow, "settings-behavior", 740, 680);
             settingsWindow.Close();
+            Load(gif);
+            var closingAnimationTimer = Field<DispatcherTimer>(window, "animationTimer");
             window.Close();
+            Check(!closingAnimationTimer.IsEnabled && Field<object>(window, "imageAnimation") == null,
+                "closing the window releases animation resources");
             application.Shutdown();
         }
         finally
