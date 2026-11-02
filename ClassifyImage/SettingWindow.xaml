@@ -100,7 +100,7 @@
         </ComboBox>
        </Grid>
        <CheckBox Name="control_main_setting_windows_check" Content="配置窗口打开时，允许操作主窗口" Checked="HandleCheck" Unchecked="HandleUnchecked"/>
-       <CheckBox Name="MyGO_easter_egg_check" Content="启动时显示彩蛋图片" Checked="HandleCheck" Unchecked="HandleUnchecked"/>
+       <CheckBox Name="MyGO_easter_egg_check" Content="启动时随机显示彩蛋图片" Checked="HandleCheck" Unchecked="HandleUnchecked"/>
       </StackPanel></Border>
      </StackPanel>
     </ScrollViewer>

@@ -29,9 +29,10 @@ namespace ClassifyImage
         public MainWindow()
         {
             InitializeComponent();
-            if (!ClassifyImage.Settings.Default.MyGO_easter_egg_check)
+            if (ClassifyImage.Settings.Default.MyGO_easter_egg_check)
             {
-                now_display_img.Source = null;
+                string image = Random.Shared.Next(2) == 0 ? "MyGO_easter_egg.jpg" : "MyGO_easter_egg2.jpg";
+                now_display_img.Source = new BitmapImage(new Uri($"pack://application:,,,/ClassifyImage;component/res/{image}"));
             }
             InitializeInterface();
             Closed += (_, _) => StopImageAnimation();

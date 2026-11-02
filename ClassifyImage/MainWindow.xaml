@@ -79,7 +79,7 @@
                      LostMouseCapture="ImageViewer_LostMouseCapture" ScrollChanged="ImageViewer_ScrollChanged">
         <Grid x:Name="imageSurface" HorizontalAlignment="Center" VerticalAlignment="Center">
          <Grid.LayoutTransform><ScaleTransform x:Name="imageScale"/></Grid.LayoutTransform>
-         <Image Source="res/MyGO_easter_egg.jpg" Name="now_display_img" Stretch="Fill" MouseLeftButtonDown="DisplayImage_MouseLeftButtonDown"/>
+         <Image Name="now_display_img" Stretch="Fill" MouseLeftButtonDown="DisplayImage_MouseLeftButtonDown"/>
             <Canvas x:Name="cropCanvas"
                     HorizontalAlignment="Center" VerticalAlignment="Center"
                     Visibility="Collapsed"
