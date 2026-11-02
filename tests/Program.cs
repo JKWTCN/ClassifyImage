@@ -391,6 +391,86 @@ internal static class Program
             Check(resolution.Text == "80x40", "reloading cropped image preserves pixel resolution");
             Check(slider.IsEnabled && !Directory.EnumerateFiles(category0, "*.tmp").Any(), "crop restores controls and cleans temporary file");
 
+            // A nonuniform, high-DPI image makes both pixel averaging and coordinate errors visible.
+            string mosaicPath = Path.Combine(root, "mosaic.png");
+            byte[] mosaicPixels = new byte[12 * 8 * 4];
+            for (int y = 0; y < 8; y++)
+                for (int x = 0; x < 12; x++)
+                {
+                    int offset = (y * 12 + x) * 4;
+                    mosaicPixels[offset] = (byte)(x * 10);
+                    mosaicPixels[offset + 1] = (byte)(y * 20);
+                    mosaicPixels[offset + 2] = (byte)(x * 10 + y * 5);
+                    mosaicPixels[offset + 3] = 255;
+                }
+            var mosaicSource = BitmapSource.Create(12, 8, 300, 300, PixelFormats.Bgra32, null, mosaicPixels, 48);
+            var mosaicEncoder = new PngBitmapEncoder();
+            mosaicEncoder.Frames.Add(BitmapFrame.Create(mosaicSource));
+            using (var stream = File.Create(mosaicPath)) mosaicEncoder.Save(stream);
+            byte[] beforeMosaic = File.ReadAllBytes(mosaicPath);
+            var applyMosaic = tools.GetMethod("ApplyMosaic")!;
+            var pixelated = (BitmapSource)applyMosaic.Invoke(null, new object[] { mosaicSource, new Int32Rect(2, 1, 5, 5), 4 })!;
+            byte[] expectedMosaic = new byte[mosaicPixels.Length];
+            pixelated.CopyPixels(expectedMosaic, 48, 0);
+            Check(expectedMosaic[(1 * 12 + 2) * 4] == 35 && expectedMosaic[(1 * 12 + 2) * 4 + 1] == 50 &&
+                expectedMosaic[(1 * 12 + 2) * 4 + 2] == 47 && expectedMosaic[(5 * 12 + 6) * 4] == 60 &&
+                expectedMosaic[(5 * 12 + 6) * 4 + 1] == 100,
+                "mosaic averages full blocks and partial blocks at selection edges");
+            Check(Enumerable.Range(0, 12 * 8).Where(i => i % 12 < 2 || i % 12 >= 7 || i / 12 < 1 || i / 12 >= 6)
+                .All(i => expectedMosaic.AsSpan(i * 4, 4).SequenceEqual(mosaicPixels.AsSpan(i * 4, 4))) &&
+                pixelated.PixelWidth == 12 && pixelated.PixelHeight == 8 && pixelated.DpiX == 300,
+                "mosaic leaves pixels outside the selection, dimensions and DPI unchanged");
+            var transparentSource = BitmapSource.Create(2, 1, 96, 96, PixelFormats.Bgra32, null,
+                new byte[] { 0, 0, 255, 255, 255, 0, 0, 0 }, 8);
+            var transparentMosaic = (BitmapSource)applyMosaic.Invoke(null, new object[] { transparentSource, new Int32Rect(0, 0, 2, 1), 4 })!;
+            byte[] alphaPixels = new byte[8];
+            transparentMosaic.CopyPixels(alphaPixels, 8, 0);
+            Check(alphaPixels.SequenceEqual(new byte[] { 0, 0, 255, 127, 0, 0, 255, 127 }),
+                "mosaic weights colors by alpha without leaking hidden transparent colors");
+            foreach (var invalid in new[] { (new Int32Rect(0, 0, 1, 1), 1), (new Int32Rect(11, 7, 2, 2), 4) })
+            {
+                bool rejected = false;
+                try { applyMosaic.Invoke(null, new object[] { mosaicSource, invalid.Item1, invalid.Item2 }); }
+                catch (TargetInvocationException ex) when (ex.InnerException is ArgumentOutOfRangeException) { rejected = true; }
+                Check(rejected, "mosaic rejects invalid block size or out-of-bounds selection");
+            }
+            Load(mosaicPath);
+            slider.Value = 200;
+            Layout();
+            Invoke(window, "MosaicButton_Click", window, new RoutedEventArgs());
+            Layout(860, 560);
+            Check(Field<bool>(window, "isMosaicMode") && !slider.IsEnabled &&
+                Field<StackPanel>(window, "cropSizePanel").Visibility == Visibility.Collapsed &&
+                Field<StackPanel>(window, "mosaicOptions").Visibility == Visibility.Visible &&
+                categoryButtons.All(button => !button.IsEnabled) &&
+                toolbar.ActualWidth + toolbar.Margin.Left + toolbar.Margin.Right >= toolbar.DesiredSize.Width - 1,
+                "mosaic editor disables navigation and classification and fits the minimum toolbar");
+            var selectionCanvas = Field<Canvas>(window, "cropCanvas");
+            void MosaicSelection(int x, int y, int width, int height) => Invoke(window, "SetMosaicSelection",
+                new Point((x + width) * selectionCanvas.Width / 12, (y + height) * selectionCanvas.Height / 8),
+                new Point(x * selectionCanvas.Width / 12, y * selectionCanvas.Height / 8));
+            Field<Slider>(window, "mosaicBlockSize").Value = 4;
+            MosaicSelection(2, 1, 5, 5);
+            Check(Pixels().SequenceEqual(expectedMosaic) && File.ReadAllBytes(mosaicPath).SequenceEqual(beforeMosaic),
+                "reverse drag selects the intended pixels after zoom while preview leaves the file unchanged");
+            MosaicSelection(8, 0, 4, 4);
+            Check(Pixels()[(1 * 12 + 2) * 4] == mosaicPixels[(1 * 12 + 2) * 4],
+                "moving the mosaic selection restores pixels from the previous selection");
+            Key("Window_KeyUp", System.Windows.Input.Key.Escape);
+            Check(Pixels().SequenceEqual(mosaicPixels) && File.ReadAllBytes(mosaicPath).SequenceEqual(beforeMosaic) &&
+                !Field<bool>(window, "isInitialized") && slider.IsEnabled,
+                "Escape cancels mosaic preview and restores the original pixels and controls");
+            Invoke(window, "MosaicButton_Click", window, new RoutedEventArgs());
+            MosaicSelection(2, 1, 5, 5);
+            Invoke(window, "btnConfirmCrop_Click", window, new RoutedEventArgs());
+            Load(mosaicPath);
+            Check(Pixels().SequenceEqual(expectedMosaic) && resolution.Text == "12x8" &&
+                !Directory.EnumerateFiles(root, "*.tmp").Any(), "saving mosaic writes the preview at the original size and cleans temporary files");
+            Load(gif);
+            Invoke(window, "MosaicButton_Click", window, new RoutedEventArgs());
+            Check(!Field<bool>(window, "isInitialized") && !Field<Button>(window, "mosaicButton").IsEnabled,
+                "animated formats cannot enter mosaic editing");
+
             Setting("auto_next_check", false);
             Setting("mut_kind_check", true);
             var settingsWindow = new SettingWindow();

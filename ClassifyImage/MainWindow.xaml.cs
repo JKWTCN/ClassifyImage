@@ -83,12 +83,21 @@ namespace ClassifyImage
 
         private void StartCropMode()
         {
-            if (Tools.IsGifOrWebP(now_img_path)) return;
+            StartImageEdit(false);
+        }
+
+        private void StartImageEdit(bool mosaic)
+        {
+            if (isInitialized || img_paths.Count == 0 || now_display_img.Source is not BitmapSource source || Tools.IsGifOrWebP(now_img_path)) return;
+            isMosaicMode = mosaic;
+            mosaicOriginal = mosaic ? source : null;
             EndImagePan();
             // 顶栏先参与布局，再以新的图片显示尺寸初始化裁剪区域。
             cropToolbar.Visibility = Visibility.Visible;
             imageBrowseTools.Visibility = Visibility.Collapsed;
-            cropSizePanel.Visibility = Visibility.Visible;
+            cropSizePanel.Visibility = mosaic ? Visibility.Collapsed : Visibility.Visible;
+            mosaicOptions.Visibility = mosaic ? Visibility.Visible : Visibility.Collapsed;
+            btnConfirmCrop.Content = mosaic ? "保存马赛克" : "保存裁剪";
             btnCancelCrop.Visibility = Visibility.Visible;
             btnConfirmCrop.Visibility = Visibility.Visible;
             UpdateLayout();
@@ -96,7 +105,7 @@ namespace ClassifyImage
             UpdateLayout();
             // 显示裁剪相关控件
             cropCanvas.Visibility = Visibility.Visible;
-            cropSizePanel.Visibility = Visibility.Visible;
+            cropSizePanel.Visibility = mosaic ? Visibility.Collapsed : Visibility.Visible;
             btnCancelCrop.Visibility = Visibility.Visible;
             btnConfirmCrop.Visibility = Visibility.Visible;
 
@@ -118,10 +127,10 @@ namespace ClassifyImage
             cropCanvas.Height = now_display_img.ActualHeight;
 
 
-            cropRectangle.Width = now_display_img.ActualWidth;
-            cropRectangle.Height = now_display_img.ActualHeight;
-            Canvas.SetLeft(cropRectangle, 0);
-            Canvas.SetTop(cropRectangle, 0);
+            cropRectangle.Width = now_display_img.ActualWidth / (mosaic ? 3 : 1);
+            cropRectangle.Height = now_display_img.ActualHeight / (mosaic ? 3 : 1);
+            Canvas.SetLeft(cropRectangle, mosaic ? cropRectangle.Width : 0);
+            Canvas.SetTop(cropRectangle, mosaic ? cropRectangle.Height : 0);
             cropRectangle.Visibility = Visibility.Visible;
 
 
@@ -138,6 +147,7 @@ namespace ClassifyImage
             UpdatePanCursor();
             UpdateResizeThumbsPosition();
             RefreshImageInterface();
+            if (mosaic) statusText.Text = "拖框选择马赛克区域，拖动边框调整；Esc 取消";
 
 
         }
@@ -165,6 +175,7 @@ namespace ClassifyImage
             SetThumbPosition(leftThumb, left - leftThumb.Width / 2, centerY - leftThumb.Height / 2);
             SetThumbPosition(rightThumb, right - rightThumb.Width / 2, centerY - rightThumb.Height / 2);
             UpdateCropSizeInputs();
+            if (isMosaicMode) UpdateMosaicPreview();
         }
 
         private void SetThumbPosition(Thumb thumb, double left, double top)
@@ -241,18 +252,19 @@ namespace ClassifyImage
             }
 
             // 限制最小尺寸
-            if (width < MinCropSize)
+            double minSize = isMosaicMode ? 1 : MinCropSize;
+            if (width < minSize)
             {
                 if (thumbPosition == "TopLeft" || thumbPosition == "Left" || thumbPosition == "BottomLeft")
-                    left -= (MinCropSize - width);
-                width = MinCropSize;
+                    left -= (minSize - width);
+                width = minSize;
             }
 
-            if (height < MinCropSize)
+            if (height < minSize)
             {
                 if (thumbPosition == "TopLeft" || thumbPosition == "Top" || thumbPosition == "TopRight")
-                    top -= (MinCropSize - height);
-                height = MinCropSize;
+                    top -= (minSize - height);
+                height = minSize;
             }
 
             // 限制在画布范围内
@@ -288,6 +300,13 @@ namespace ClassifyImage
         }
         private void EndCropMode()
         {
+            if (mosaicOriginal != null) now_display_img.Source = mosaicOriginal;
+            if (isMosaicMode) statusText.Text = "已取消马赛克";
+            mosaicOriginal = null;
+            isMosaicMode = false;
+            isDrawingMosaic = false;
+            cropCanvas.ReleaseMouseCapture();
+            mosaicOptions.Visibility = Visibility.Collapsed;
             // 隐藏裁剪相关控件
             cropCanvas.Visibility = Visibility.Collapsed;
             cropSizePanel.Visibility = Visibility.Collapsed;
@@ -323,6 +342,11 @@ namespace ClassifyImage
         }
         private void btnConfirmCrop_Click(object sender, RoutedEventArgs e)
         {
+            if (isMosaicMode)
+            {
+                SaveMosaic();
+                return;
+            }
             if (!isInitialized || cropRectangle.Width == 0 || cropRectangle.Height == 0)
             {
                 MessageBox.Show("请先调整裁剪区域");

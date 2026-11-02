@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using System.Windows;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
 namespace ClassifyImage
@@ -119,6 +120,56 @@ namespace ClassifyImage
             if (copy) File.Copy(source, destination);
             else File.Move(source, destination);
             return destination;
+        }
+
+        public static BitmapSource ApplyMosaic(BitmapSource source, Int32Rect area, int blockSize)
+        {
+            if (blockSize < 2) throw new ArgumentOutOfRangeException(nameof(blockSize));
+            if (area.X < 0 || area.Y < 0 || area.Width <= 0 || area.Height <= 0 ||
+                area.X > source.PixelWidth - area.Width || area.Y > source.PixelHeight - area.Height)
+                throw new ArgumentOutOfRangeException(nameof(area));
+
+            var converted = new FormatConvertedBitmap(source, PixelFormats.Bgra32, null, 0);
+            int stride = checked(source.PixelWidth * 4);
+            byte[] pixels = new byte[checked(stride * source.PixelHeight)];
+            converted.CopyPixels(pixels, stride, 0);
+            for (int top = area.Y; top < area.Y + area.Height; top += blockSize)
+            {
+                int bottom = Math.Min(top + blockSize, area.Y + area.Height);
+                for (int left = area.X; left < area.X + area.Width; left += blockSize)
+                {
+                    int right = Math.Min(left + blockSize, area.X + area.Width);
+                    long blue = 0, green = 0, red = 0, alpha = 0;
+                    for (int y = top; y < bottom; y++)
+                        for (int x = left; x < right; x++)
+                        {
+                            int offset = y * stride + x * 4;
+                            int a = pixels[offset + 3];
+                            blue += pixels[offset] * a;
+                            green += pixels[offset + 1] * a;
+                            red += pixels[offset + 2] * a;
+                            alpha += a;
+                        }
+                    // 按透明度加权，避免透明像素的隐藏颜色污染方块颜色。
+                    byte b = alpha == 0 ? (byte)0 : (byte)(blue / alpha);
+                    byte g = alpha == 0 ? (byte)0 : (byte)(green / alpha);
+                    byte r = alpha == 0 ? (byte)0 : (byte)(red / alpha);
+                    byte averageAlpha = (byte)(alpha / ((long)(right - left) * (bottom - top)));
+                    for (int y = top; y < bottom; y++)
+                        for (int x = left; x < right; x++)
+                        {
+                            int offset = y * stride + x * 4;
+                            pixels[offset] = b;
+                            pixels[offset + 1] = g;
+                            pixels[offset + 2] = r;
+                            pixels[offset + 3] = averageAlpha;
+                        }
+                }
+            }
+            var result = BitmapSource.Create(source.PixelWidth, source.PixelHeight, source.DpiX, source.DpiY,
+                PixelFormats.Bgra32, null, pixels, stride);
+            result.Freeze();
+            return result;
         }
 
         // 先完整编码到同目录临时文件，避免保存失败时损坏原图。

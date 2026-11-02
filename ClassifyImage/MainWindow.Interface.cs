@@ -84,6 +84,8 @@ public partial class MainWindow
         imageActions.IsEnabled = loaded && !isInitialized;
         edit_img_btn.IsEnabled = loaded && !isInitialized && !Tools.IsGifOrWebP(now_img_path);
         edit_img_btn.ToolTip = Tools.IsGifOrWebP(now_img_path) ? "GIF / WebP 支持浏览与分类，暂不支持裁剪" : "E";
+        mosaicButton.IsEnabled = loaded && !isInitialized && !Tools.IsGifOrWebP(now_img_path);
+        mosaicButton.ToolTip = Tools.IsGifOrWebP(now_img_path) ? "GIF / WebP 暂不支持马赛克编辑" : "局部马赛克（M）";
         left_btn.IsEnabled = right_btn.IsEnabled = hasImages && !isInitialized;
         bool missing = imageLoadError is FileNotFoundException or DirectoryNotFoundException;
         emptyStateTitle.Text = hasImages ? missing ? "图片文件不存在" : "图片读取失败" : "准备好下一组图片了吗？";
@@ -146,6 +148,7 @@ public partial class MainWindow
         else if (e.Key == Key.O && modifiers == (ModifierKeys.Control | ModifierKeys.Shift)) open_file_folders_btn_Click(sender, new RoutedEventArgs());
         else if (e.Key == Key.F2 && modifiers == ModifierKeys.None) setting_btn_Click(sender, new RoutedEventArgs());
         else if (e.Key == Key.E && modifiers == ModifierKeys.None && img_paths.Count > 0) edit_img_btn_Click(sender, new RoutedEventArgs());
+        else if (e.Key == Key.M && modifiers == ModifierKeys.None && img_paths.Count > 0) MosaicButton_Click(sender, new RoutedEventArgs());
         else if (e.Key == Key.C && modifiers == ModifierKeys.Control && img_paths.Count > 0) copy_clipboard_btn_Click(sender, new RoutedEventArgs());
         else return;
         e.Handled = true;

@@ -22,6 +22,11 @@
      <TextBlock Text="裁剪像素 " VerticalAlignment="Center"/><TextBox x:Name="cropWidthInput" Width="64"/><TextBlock Text=" × " VerticalAlignment="Center"/><TextBox x:Name="cropHeightInput" Width="64"/>
      <Button Content="应用" Click="ApplyCropSize_Click" Margin="8,0,0,0" Focusable="False"/>
     </StackPanel>
+    <StackPanel x:Name="mosaicOptions" Orientation="Horizontal" Visibility="Collapsed" VerticalAlignment="Center">
+     <TextBlock Text="方块大小 " VerticalAlignment="Center"/>
+     <Slider x:Name="mosaicBlockSize" Width="90" Minimum="4" Maximum="80" Value="16" TickFrequency="4" IsSnapToTickEnabled="True" ValueChanged="MosaicBlockSize_Changed" ToolTip="马赛克方块边长（原图像素）"/>
+     <TextBlock Width="42" Margin="6,0,0,0" VerticalAlignment="Center" Text="{Binding ElementName=mosaicBlockSize, Path=Value, StringFormat={}{0:0}px}"/>
+    </StackPanel>
     <Button x:Name="btnConfirmCrop" Content="保存裁剪" Style="{StaticResource PrimaryButton}" Click="btnConfirmCrop_Click" Visibility="Collapsed" Margin="12,0,6,0" Focusable="False"/>
     <Button x:Name="btnCancelCrop" Content="取消" Click="btnCancelCrop_Click" Visibility="Collapsed" ToolTip="Esc" Focusable="False"/>
    </StackPanel>
@@ -35,6 +40,7 @@
      <Border Width="1" Background="#E2E8F0" Margin="12,4"/>
      <StackPanel Orientation="Horizontal" x:Name="imageActions">
       <Button x:Name="edit_img_btn" Content="裁剪" Click="edit_img_btn_Click" ToolTip="E" Margin="0,0,6,0" Focusable="False"/>
+      <Button x:Name="mosaicButton" Content="马赛克" Click="MosaicButton_Click" ToolTip="局部马赛克（M）" Margin="0,0,6,0" Focusable="False"/>
       <Button x:Name="copy_clipboard_btn" Content="复制" Click="copy_clipboard_btn_Click" ToolTip="复制图片（Ctrl + C）" Margin="0,0,6,0" Focusable="False"/>
       <Button x:Name="externalOpenButton" Content="外部打开" Click="open_explorer_btn_Click" Margin="0,0,6,0" Focusable="False"/>
       <Button x:Name="externalSelectButton" Content="外部选择" Click="select_in_explorer_btn_Click" ToolTip="在资源管理器中选中当前图片" Focusable="False"/>
@@ -77,7 +83,11 @@
             <Canvas x:Name="cropCanvas"
                     HorizontalAlignment="Center" VerticalAlignment="Center"
                     Visibility="Collapsed"
-                    Background="Transparent">
+                    Background="Transparent"
+                    MouseLeftButtonDown="MosaicCanvas_MouseLeftButtonDown"
+                    MouseMove="MosaicCanvas_MouseMove"
+                    MouseLeftButtonUp="MosaicCanvas_MouseLeftButtonUp"
+                    LostMouseCapture="MosaicCanvas_LostMouseCapture">
                 <Rectangle x:Name="cropRectangle"
                            Stroke="Red"
                            Fill="Transparent"
